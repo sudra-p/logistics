@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Confirmation</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 4px;
+            padding: 30px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            font-size: 22px;
+            margin-top: 0;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        table tr td {
+            padding: 8px 12px;
+            border-bottom: 1px solid #eee;
+            vertical-align: top;
+        }
+        table tr td:first-child {
+            font-weight: bold;
+            color: #555;
+            width: 40%;
+        }
+        .footer {
+            margin-top: 25px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+            font-size: 12px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Booking Confirmation</h1>
+        <p>Dear {{ customer_name }},</p>
+        <p>Your booking has been confirmed with the following details:</p>
+
+        <table>
+            <tr>
+                <td>Booking No</td>
+                <td>{{ booking_no }}</td>
+            </tr>
+            <tr>
+                <td>Customer</td>
+                <td>{{ customer_name }}</td>
+            </tr>
+            <tr>
+                <td>Place of Receipt (POR)</td>
+                <td>{{ por }}</td>
+            </tr>
+            <tr>
+                <td>Port of Loading (POL)</td>
+                <td>{{ pol }}</td>
+            </tr>
+            <tr>
+                <td>Port of Discharge (POD)</td>
+                <td>{{ pod }}</td>
+            </tr>
+            <tr>
+                <td>Stuffing Point</td>
+                <td>{{ stuffing_point }}</td>
+            </tr>
+            <tr>
+                <td>Clearance Point</td>
+                <td>{{ clearance_point }}</td>
+            </tr>
+            <tr>
+                <td>Containers</td>
+                <td>{{ container_summary }}</td>
+            </tr>
+            <tr>
+                <td>Vessel / Voyage</td>
+                <td>{{ vessel_voyage }}</td>
+            </tr>
+            <tr>
+                <td>Shipping Line</td>
+                <td>{{ shipping_line }}</td>
+            </tr>
+            <tr>
+                <td>ETD</td>
+                <td>{{ etd }}</td>
+            </tr>
+            <tr>
+                <td>ETA</td>
+                <td>{{ eta }}</td>
+            </tr>
+        </table>
+
+        <div class="footer">
+            <p>This is an automated notification. Please do not reply to this email.</p>
+        </div>
+    </div>
+</body>
+</html>

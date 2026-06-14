@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Onboard Confirmation</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 4px;
+            padding: 30px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            font-size: 22px;
+            margin-top: 0;
+            border-bottom: 2px solid #27ae60;
+            padding-bottom: 10px;
+        }
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            margin-bottom: 20px;
+        }
+        .info-table tr td {
+            padding: 8px 12px;
+            border-bottom: 1px solid #eee;
+            vertical-align: top;
+        }
+        .info-table tr td:first-child {
+            font-weight: bold;
+            color: #555;
+            width: 40%;
+        }
+        .container-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        .container-table th {
+            background-color: #2c3e50;
+            color: #ffffff;
+            padding: 10px 8px;
+            text-align: left;
+            font-size: 13px;
+        }
+        .container-table td {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+            font-size: 13px;
+        }
+        .container-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .footer {
+            margin-top: 25px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+            font-size: 12px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Onboard Confirmation</h1>
+        <p>Dear {{ customer_name }},</p>
+        <p>We are pleased to confirm that the following shipment is now onboard:</p>
+
+        <table class="info-table">
+            <tr>
+                <td>Booking No</td>
+                <td>{{ booking_no }}</td>
+            </tr>
+            <tr>
+                <td>Vessel / Voyage</td>
+                <td>{{ vessel_voyage }}</td>
+            </tr>
+        </table>
+
+        <h2 style="font-size: 16px; color: #2c3e50;">Container Details</h2>
+        <table class="container-table">
+            <thead>
+                <tr>
+                    <th>Booking No</th>
+                    <th>Container No</th>
+                    <th>Container Size</th>
+                    <th>FPD</th>
+                    <th>Shipping Line</th>
+                    <th>BL No</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in container_rows %}
+                <tr>
+                    <td>{{ row.booking_no }}</td>
+                    <td>{{ row.container_no }}</td>
+                    <td>{{ row.container_size }}</td>
+                    <td>{{ row.fpd }}</td>
+                    <td>{{ row.shipping_line }}</td>
+                    <td>{{ row.bl_no }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="text-align: center; color: #888;">No containers found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="footer">
+            <p>This is an automated notification. Please do not reply to this email.</p>
+        </div>
+    </div>
+</body>
+</html>

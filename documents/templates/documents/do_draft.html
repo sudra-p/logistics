@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Delivery Order Draft - {{ booking.job_number }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 12px; margin: 20px; }
+        h1 { text-align: center; font-size: 18px; margin-bottom: 20px; }
+        .header { border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 15px; }
+        .section { margin-bottom: 15px; }
+        .section-title { font-weight: bold; font-size: 13px; margin-bottom: 5px; border-bottom: 1px solid #ccc; }
+        table { width: 100%; border-collapse: collapse; margin-top: 5px; }
+        th, td { border: 1px solid #ccc; padding: 5px 8px; text-align: left; }
+        th { background-color: #f0f0f0; }
+        .draft-watermark { text-align: center; color: #ccc; font-size: 48px; position: fixed; top: 40%; left: 25%; transform: rotate(-30deg); opacity: 0.3; }
+        .footer { margin-top: 30px; font-size: 10px; color: #666; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="draft-watermark">DRAFT</div>
+
+    <div class="header">
+        <h1>DELIVERY ORDER</h1>
+        <p><strong>Job Number:</strong> {{ booking.job_number }}</p>
+        <p><strong>Booking No:</strong> {{ booking.booking_no }}</p>
+        <p><strong>Date:</strong> {{ generated_at|date:"d/m/Y" }}</p>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Parties</div>
+        <p><strong>Shipper:</strong> {{ booking.shipper.name }}</p>
+        <p><strong>Consignee:</strong> {{ booking.consignee.name }}</p>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Vessel & Voyage</div>
+        <p><strong>Vessel:</strong> {{ booking.vessel.name }}</p>
+        <p><strong>Voyage:</strong> {{ booking.voyage }}</p>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Port Details</div>
+        <p><strong>Port of Loading:</strong> {{ booking.pol.name }}</p>
+        <p><strong>Port of Discharge:</strong> {{ booking.pod.name }}</p>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Container Details</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Size</th>
+                    <th>Type</th>
+                    <th>Count</th>
+                    <th>Container No</th>
+                    <th>Seal No</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for container in containers %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ container.get_container_size_display }}</td>
+                    <td>{{ container.container_type.name }}</td>
+                    <td>{{ container.container_count }}</td>
+                    <td>{{ container.container_no|default:"-" }}</td>
+                    <td>{{ container.seal_no|default:"-" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="footer">
+        <p>This is a draft document generated on {{ generated_at|date:"d/m/Y H:i" }} UTC. Not valid for official use.</p>
+    </div>
+</body>
+</html>
