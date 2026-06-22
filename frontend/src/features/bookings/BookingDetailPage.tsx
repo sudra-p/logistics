@@ -149,13 +149,12 @@ export default function BookingDetailPage() {
           Change Status:
         </Typography>
         <FormControl size="small" sx={{ minWidth: 160 }}>
-          <InputLabel>New Status</InputLabel>
+          <InputLabel>Next Status</InputLabel>
           <Select
             value={newStatus}
-            label="New Status"
+            label="Next Status"
             onChange={(e) => setNewStatus(e.target.value)}
           >
-            <MenuItem value="PENDING">Pending</MenuItem>
             <MenuItem value="BOOKED">Booked</MenuItem>
             <MenuItem value="STUFFING">Stuffing</MenuItem>
             <MenuItem value="SHIPPED">Shipped</MenuItem>
@@ -170,9 +169,17 @@ export default function BookingDetailPage() {
         >
           {statusChangeMutation.isPending ? <CircularProgress size={18} /> : 'Update Status'}
         </Button>
+        <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+          Flow: Pending → Booked → Stuffing → Shipped → Completed
+        </Typography>
         {statusChangeMutation.isError && (
           <Alert severity="error" sx={{ py: 0, flex: '1 0 100%' }}>
-            Failed to change status. Check the allowed transitions.
+            {(() => {
+              const err = statusChangeMutation.error as { response?: { data?: Record<string, string | string[]> } };
+              const data = err?.response?.data;
+              if (data?.status) return Array.isArray(data.status) ? data.status.join(', ') : data.status;
+              return 'Failed to change status. Check the allowed transitions.';
+            })()}
           </Alert>
         )}
       </Paper>
