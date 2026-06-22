@@ -10,7 +10,7 @@ export interface StuffingProduct {
 }
 
 export interface PerformStuffingPayload {
-  products: StuffingProduct[];
+  product_quantities: StuffingProduct[];
 }
 
 // ─── Hooks ───────────────────────────────────────────────────────────────────

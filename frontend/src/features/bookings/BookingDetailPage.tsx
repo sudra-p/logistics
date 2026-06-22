@@ -164,7 +164,7 @@ export default function BookingDetailPage() {
   function handleConfirmStuffing() {
     setConfirmDialogOpen(false);
     stuffingMutation.mutate(
-      { products: stuffingProducts.filter((p) => p.product_name && p.quantity > 0) },
+      { product_quantities: stuffingProducts.filter((p) => p.product_name && p.quantity > 0) },
       {
         onSuccess: () => {
           setStuffingDialogOpen(false);
