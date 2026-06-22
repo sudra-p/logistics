@@ -73,12 +73,9 @@ async function fetchBookingSearch(
 }
 
 export function useBookingSearch(filters: SearchFilters) {
-  const enabled = isValidSearchQuery(filters.q);
-
   return useQuery({
     queryKey: ['bookingSearch', filters],
     queryFn: () => fetchBookingSearch(filters),
-    enabled,
     placeholderData: keepPreviousData,
     retry: 1,
   });

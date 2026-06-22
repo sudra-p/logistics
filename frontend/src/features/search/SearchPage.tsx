@@ -133,9 +133,8 @@ export default function SearchPage() {
     window.open(`/api/reports/master/export/?${params.toString()}`, '_blank');
   };
 
-  const hasSearched = filters.q.length > 0;
   const hasResults = data && data.results.length > 0;
-  const noResults = hasSearched && data && data.results.length === 0;
+  const noResults = data && data.results.length === 0;
   const totalPages = data ? Math.ceil(data.count / filters.page_size) : 0;
 
   return (
@@ -301,7 +300,7 @@ export default function SearchPage() {
       )}
 
       {/* Loading */}
-      {isLoading && hasSearched && (
+      {isLoading && (
         <div className="flex items-center gap-3 py-4">
           <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
           <p className="text-body-md text-on-surface-variant">Loading results...</p>
