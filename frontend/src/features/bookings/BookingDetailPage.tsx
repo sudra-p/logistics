@@ -30,8 +30,12 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import SailingIcon from '@mui/icons-material/Sailing';
 import WarningIcon from '@mui/icons-material/Warning';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { useBLForBooking } from '@/features/bl/hooks';
 import { usePerformStuffing } from './stuffingHooks';
+import { useMutation } from '@tanstack/react-query';
+import apiClient from '@/api/client';
+import { ENDPOINTS } from '@/api/endpoints';
 import type { StuffingProduct } from './stuffingHooks';
 
 interface ContainerInfo {
@@ -59,6 +63,12 @@ export default function BookingDetailPage() {
     { product_name: '', quantity: 0 },
   ]);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  const deleteMutation = useMutation({
+    mutationFn: () => apiClient.delete(ENDPOINTS.BOOKING_DETAIL(bookingId!)),
+    onSuccess: () => { navigate('/search'); },
+  });
 
   const stuffingMutation = usePerformStuffing(
     bookingId ?? 0,
@@ -104,9 +114,19 @@ export default function BookingDetailPage() {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h4" component="h1" sx={{ mb: 3 }}>
-        Booking Detail
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h4" component="h1">
+          Booking Detail
+        </Typography>
+        <Button
+          variant="outlined"
+          color="error"
+          startIcon={<DeleteIcon />}
+          onClick={() => setDeleteDialogOpen(true)}
+        >
+          Delete Booking
+        </Button>
+      </Box>
 
       {/* BL Alert Banner */}
       {blMissing && !blQuery.isLoading && (
@@ -318,6 +338,33 @@ export default function BookingDetailPage() {
           <Button onClick={() => setConfirmDialogOpen(false)}>Cancel</Button>
           <Button variant="contained" color="error" onClick={handleConfirmStuffing}>
             Confirm Stuffing
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Booking Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+        <DialogTitle>Delete Booking</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete this booking? This action cannot be undone.
+            All associated documents (BL, invoices, packing lists) will also be removed.
+          </DialogContentText>
+          {deleteMutation.isError && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              Failed to delete booking. It may have dependencies that prevent deletion.
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={() => deleteMutation.mutate()}
+            disabled={deleteMutation.isPending}
+          >
+            {deleteMutation.isPending ? <CircularProgress size={20} /> : 'Delete'}
           </Button>
         </DialogActions>
       </Dialog>
