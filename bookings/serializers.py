@@ -25,6 +25,7 @@ from master_data.models import (
     Transporter,
     Vessel,
 )
+from proforma.models import ProformaInvoice
 
 
 class BookingCreateSerializer(serializers.Serializer):
@@ -63,6 +64,11 @@ class BookingCreateSerializer(serializers.Serializer):
     )
     shipment_type = serializers.CharField(max_length=50, required=True)
     stuffing_type = serializers.CharField(max_length=50, required=True)
+
+    # Optional Proforma Invoice link
+    proforma_invoice = serializers.PrimaryKeyRelatedField(
+        queryset=ProformaInvoice.objects.all(), required=False, allow_null=True
+    )
 
     # Optional FK references
     vessel = serializers.PrimaryKeyRelatedField(
@@ -210,6 +216,11 @@ class BookingUpdateSerializer(serializers.Serializer):
     )
     shipment_type = serializers.CharField(max_length=50, required=False)
     stuffing_type = serializers.CharField(max_length=50, required=False)
+
+    # Optional Proforma Invoice link
+    proforma_invoice = serializers.PrimaryKeyRelatedField(
+        queryset=ProformaInvoice.objects.all(), required=False, allow_null=True
+    )
 
     # Optional FK references
     vessel = serializers.PrimaryKeyRelatedField(
@@ -398,6 +409,8 @@ class BookingUpdateSerializer(serializers.Serializer):
 class BookingDetailSerializer(serializers.ModelSerializer):
     """Serializer for booking retrieval (read-only detail view)."""
 
+    proforma_invoice = serializers.PrimaryKeyRelatedField(read_only=True)
+
     class Meta:
         model = Booking
         fields = '__all__'
@@ -436,8 +449,11 @@ class ContainerDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Container
-        fields = ['id', 'container_type', 'container_size', 'container_count', 'container_no', 'seal_no']
-        read_only_fields = ['id']
+        fields = [
+            'id', 'container_type', 'container_size', 'container_count',
+            'container_no', 'seal_no', 'stuffing_status', 'stuffed_at',
+        ]
+        read_only_fields = ['id', 'stuffing_status', 'stuffed_at']
 
 
 class TranshipmentLegSerializer(serializers.Serializer):

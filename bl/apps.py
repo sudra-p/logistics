@@ -1,0 +1,7 @@
+from django.apps import AppConfig
+
+
+class BlConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'bl'
+    verbose_name = 'Bill of Lading'

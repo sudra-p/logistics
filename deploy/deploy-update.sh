@@ -14,9 +14,9 @@
 set -euo pipefail
 
 # --- Configuration ---
-APP_DIR="/home/ubuntu/logistics"
+APP_DIR="/home/ubuntu/app/logistics"
 BRANCH="${1:-main}"
-COMPOSE_CMD="docker-compose"
+COMPOSE_CMD="docker compose"
 
 echo "=========================================="
 echo "  Deploying Update - $(date)"

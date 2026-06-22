@@ -29,7 +29,9 @@ class Booking(models.Model):
 
     class Status(models.TextChoices):
         PENDING = 'PENDING', 'Pending'
-        DO_BOOKING_EDIT = 'DO_BOOKING_EDIT', 'DO-Booking Edit'
+        BOOKED = 'BOOKED', 'Booked'
+        STUFFING = 'STUFFING', 'Stuffing'
+        SHIPPED = 'SHIPPED', 'Shipped'
         COMPLETED = 'COMPLETED', 'Completed'
 
     class CargoType(models.TextChoices):
@@ -45,6 +47,15 @@ class Booking(models.Model):
     booking_no = models.CharField(max_length=50, blank=True)
     status = models.CharField(
         max_length=20, choices=Status.choices, default=Status.PENDING
+    )
+
+    # Proforma Invoice link
+    proforma_invoice = models.ForeignKey(
+        'proforma.ProformaInvoice',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='bookings',
     )
 
     # Dates (mandatory)
@@ -241,6 +252,10 @@ class Container(models.Model):
         FT_40_HC = '40FT_HC', '40ft HC'
         FT_45 = '45FT', '45ft'
 
+    class StuffingStatus(models.TextChoices):
+        PENDING = 'PENDING', 'Pending'
+        STUFFED = 'STUFFED', 'Stuffed'
+
     booking = models.ForeignKey(
         Booking, on_delete=models.CASCADE, related_name='containers'
     )
@@ -253,6 +268,21 @@ class Container(models.Model):
     container_count = models.PositiveIntegerField()
     container_no = models.CharField(max_length=20, blank=True)
     seal_no = models.CharField(max_length=20, blank=True)
+
+    # Stuffing tracking
+    stuffing_status = models.CharField(
+        max_length=10,
+        choices=StuffingStatus.choices,
+        default=StuffingStatus.PENDING,
+    )
+    stuffed_at = models.DateTimeField(null=True, blank=True)
+    stuffed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='stuffed_containers',
+    )
 
     class Meta:
         constraints = [

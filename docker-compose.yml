@@ -1,15 +1,14 @@
-version: '3.8'
-
 services:
   web:
     build: .
     command: gunicorn logistics.wsgi:application --bind 0.0.0.0:8000 --workers 3
     volumes:
       - static_volume:/app/staticfiles
+      - media_volume:/app/media
     env_file:
       - .env
-    depends_on:
-      - redis
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     expose:
       - "8000"
     restart: unless-stopped
@@ -19,8 +18,8 @@ services:
     command: celery -A logistics worker -l info
     env_file:
       - .env
-    depends_on:
-      - redis
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
 
   celery_beat:
@@ -28,27 +27,24 @@ services:
     command: celery -A logistics beat -l info
     env_file:
       - .env
-    depends_on:
-      - redis
-    restart: unless-stopped
-
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
 
   nginx:
-    image: nginx:alpine
+    build: ./frontend
     ports:
       - "80:80"
       - "443:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
       - static_volume:/app/staticfiles
+      - media_volume:/app/media
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - web
     restart: unless-stopped
 
 volumes:
   static_volume:
+  media_volume:

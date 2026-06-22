@@ -15,6 +15,7 @@ from documents.views import (
     BLDraftView,
     DODraftView,
 )
+from inventory.views import StuffingView
 
 app_name = 'bookings'
 
@@ -32,6 +33,12 @@ urlpatterns = [
         '<int:booking_id>/containers/<int:container_id>/',
         ContainerDetailView.as_view(),
         name='container-detail',
+    ),
+    # Container stuffing endpoint
+    path(
+        '<int:booking_id>/containers/<int:container_id>/stuff/',
+        StuffingView.as_view(),
+        name='container-stuff',
     ),
     # Transhipment endpoints (must be before router.urls to avoid conflicts)
     path(

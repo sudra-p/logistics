@@ -6,6 +6,11 @@ def _user_in_group(user, group_name):
     return user.groups.filter(name=group_name).exists()
 
 
+def _is_superuser(user):
+    """Check if user is a superuser (bypasses group checks)."""
+    return user.is_superuser
+
+
 class IsOperationsUser(BasePermission):
     """Allows access to users in the Operations group."""
 
@@ -13,7 +18,7 @@ class IsOperationsUser(BasePermission):
         return (
             request.user
             and request.user.is_authenticated
-            and _user_in_group(request.user, 'Operations')
+            and (_is_superuser(request.user) or _user_in_group(request.user, 'Operations'))
         )
 
 
@@ -24,7 +29,7 @@ class IsAccountsUser(BasePermission):
         return (
             request.user
             and request.user.is_authenticated
-            and _user_in_group(request.user, 'Accounts')
+            and (_is_superuser(request.user) or _user_in_group(request.user, 'Accounts'))
         )
 
 
@@ -35,7 +40,7 @@ class IsSalesUser(BasePermission):
         return (
             request.user
             and request.user.is_authenticated
-            and _user_in_group(request.user, 'Sales')
+            and (_is_superuser(request.user) or _user_in_group(request.user, 'Sales'))
         )
 
 
@@ -46,7 +51,7 @@ class IsAdminUser(BasePermission):
         return (
             request.user
             and request.user.is_authenticated
-            and _user_in_group(request.user, 'Admin')
+            and (_is_superuser(request.user) or _user_in_group(request.user, 'Admin'))
         )
 
 
@@ -60,7 +65,8 @@ class CanModifyBooking(BasePermission):
         if not request.user or not request.user.is_authenticated:
             return False
         return (
-            _user_in_group(request.user, 'Operations')
+            _is_superuser(request.user)
+            or _user_in_group(request.user, 'Operations')
             or _user_in_group(request.user, 'Admin')
         )
 
@@ -76,7 +82,8 @@ class CanViewBooking(BasePermission):
         if not request.user or not request.user.is_authenticated:
             return False
         return (
-            _user_in_group(request.user, 'Operations')
+            _is_superuser(request.user)
+            or _user_in_group(request.user, 'Operations')
             or _user_in_group(request.user, 'Accounts')
             or _user_in_group(request.user, 'Sales')
             or _user_in_group(request.user, 'Admin')
@@ -92,4 +99,4 @@ class CanManageMasterData(BasePermission):
     def has_permission(self, request, view):
         if not request.user or not request.user.is_authenticated:
             return False
-        return _user_in_group(request.user, 'Admin')
+        return _is_superuser(request.user) or _user_in_group(request.user, 'Admin')

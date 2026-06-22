@@ -37,6 +37,13 @@ INSTALLED_APPS = [
     'notifications',
     'reports',
     'documents',
+    'proforma',
+    'payments',
+    'inventory',
+    'invoices',
+    'bl',
+    'dashboard',
+    'operations',
 ]
 
 MIDDLEWARE = [
@@ -109,6 +116,11 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# Media files (user-uploaded content)
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 
 # Default primary key field type
 
@@ -172,7 +184,13 @@ AWS_SES_FROM_EMAIL = os.environ.get('AWS_SES_FROM_EMAIL', 'noreply@logistics.exa
 # Distribution List for email notifications
 
 DISTRIBUTION_LIST = os.environ.get('DISTRIBUTION_LIST', '').split(',')
+CSRF_TRUSTED_ORIGINS = os.environ.get(
+    'CSRF_TRUSTED_ORIGINS', 
+    'https://erp.parthsudra.com'
+).split(',')
 
+# Trust X-Forwarded-Proto header from nginx proxy
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Simple JWT Configuration
 

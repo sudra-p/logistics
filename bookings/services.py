@@ -13,6 +13,68 @@ from bookings.validators import (
 )
 
 
+# Valid booking status transitions
+BOOKING_TRANSITIONS = {
+    'PENDING': ['BOOKED'],
+    'BOOKED': ['STUFFING'],
+    'STUFFING': ['SHIPPED'],
+    'SHIPPED': ['COMPLETED'],
+    'COMPLETED': [],
+}
+
+
+def validate_booking_status_transition(current_status, new_status):
+    """
+    Validate that a booking status transition is allowed.
+
+    Args:
+        current_status: Current booking status value.
+        new_status: Target booking status value.
+
+    Raises:
+        serializers.ValidationError if transition is not allowed.
+    """
+    allowed = BOOKING_TRANSITIONS.get(current_status, [])
+    if new_status not in allowed:
+        raise serializers.ValidationError(
+            {
+                'status': (
+                    f'Cannot transition from {current_status} to {new_status}. '
+                    f'Allowed transitions: {allowed}'
+                )
+            }
+        )
+
+
+def validate_can_ship(booking):
+    """
+    Validate that a booking can transition to SHIPPED status.
+    All containers must have stuffing_status == STUFFED.
+
+    Args:
+        booking: Booking instance.
+
+    Raises:
+        serializers.ValidationError if any container is not stuffed.
+    """
+    containers = booking.containers.all()
+    if not containers.exists():
+        raise serializers.ValidationError(
+            {'status': 'Cannot transition to SHIPPED: booking has no containers.'}
+        )
+
+    unstuffed = containers.exclude(stuffing_status='STUFFED')
+    if unstuffed.exists():
+        raise serializers.ValidationError(
+            {
+                'status': (
+                    'Cannot transition to SHIPPED: all containers must have '
+                    'stuffing_status = STUFFED.'
+                )
+            }
+        )
+
+
 class BookingService:
     """
     Service class encapsulating booking business logic.
@@ -290,11 +352,7 @@ class BookingService:
                 remaining_leg.save(update_fields=['sequence'])
 
     # Valid status transitions: current_status -> [allowed next statuses]
-    VALID_TRANSITIONS = {
-        Booking.Status.PENDING: [Booking.Status.DO_BOOKING_EDIT],
-        Booking.Status.DO_BOOKING_EDIT: [Booking.Status.COMPLETED],
-        Booking.Status.COMPLETED: [],
-    }
+    VALID_TRANSITIONS = BOOKING_TRANSITIONS
 
     # Mandatory fields that must be populated before transitioning to COMPLETED
     MANDATORY_FIELDS_FOR_COMPLETION = [
@@ -334,29 +392,12 @@ class BookingService:
 
         previous_status = booking.status
 
-        # Validate transition
-        allowed = cls.VALID_TRANSITIONS.get(previous_status, [])
-        if new_status not in allowed:
-            if allowed:
-                allowed_display = ', '.join(
-                    Booking.Status(s).label for s in allowed
-                )
-                raise serializers.ValidationError({
-                    'status': (
-                        f'Invalid status transition from '
-                        f'"{Booking.Status(previous_status).label}" to '
-                        f'"{Booking.Status(new_status).label}". '
-                        f'Allowed next status: {allowed_display}.'
-                    )
-                })
-            else:
-                raise serializers.ValidationError({
-                    'status': (
-                        f'Invalid status transition. '
-                        f'"{Booking.Status(previous_status).label}" is a terminal '
-                        f'status and cannot be changed.'
-                    )
-                })
+        # Validate transition using the centralized helper
+        validate_booking_status_transition(previous_status, new_status)
+
+        # If transitioning to SHIPPED, validate all containers are stuffed
+        if new_status == Booking.Status.SHIPPED:
+            validate_can_ship(booking)
 
         # If transitioning to COMPLETED, validate all mandatory fields
         if new_status == Booking.Status.COMPLETED:
