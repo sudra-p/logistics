@@ -25,6 +25,10 @@ import {
   DialogActions,
   TextField,
   CircularProgress,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import DescriptionIcon from '@mui/icons-material/Description';
 import InventoryIcon from '@mui/icons-material/Inventory';
@@ -100,6 +104,17 @@ export default function BookingDetailPage() {
     setStuffingProducts((prev) => [...prev, { product_name: '', quantity: 0 }]);
   }
 
+  // Status change
+  const [newStatus, setNewStatus] = useState('');
+  const statusChangeMutation = useMutation({
+    mutationFn: (statusValue: string) =>
+      apiClient.patch(`bookings/${bookingId}/status/`, { status: statusValue }),
+    onSuccess: () => {
+      setNewStatus('');
+      window.location.reload();
+    },
+  });
+
   function handleConfirmStuffing() {
     setConfirmDialogOpen(false);
     stuffingMutation.mutate(
@@ -127,6 +142,40 @@ export default function BookingDetailPage() {
           Delete Booking
         </Button>
       </Box>
+
+      {/* Status Change Section */}
+      <Paper sx={{ p: 2, mb: 3, display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+        <Typography variant="subtitle2" color="text.secondary">
+          Change Status:
+        </Typography>
+        <FormControl size="small" sx={{ minWidth: 160 }}>
+          <InputLabel>New Status</InputLabel>
+          <Select
+            value={newStatus}
+            label="New Status"
+            onChange={(e) => setNewStatus(e.target.value)}
+          >
+            <MenuItem value="PENDING">Pending</MenuItem>
+            <MenuItem value="BOOKED">Booked</MenuItem>
+            <MenuItem value="STUFFING">Stuffing</MenuItem>
+            <MenuItem value="SHIPPED">Shipped</MenuItem>
+            <MenuItem value="COMPLETED">Completed</MenuItem>
+          </Select>
+        </FormControl>
+        <Button
+          variant="contained"
+          size="small"
+          disabled={!newStatus || statusChangeMutation.isPending}
+          onClick={() => statusChangeMutation.mutate(newStatus)}
+        >
+          {statusChangeMutation.isPending ? <CircularProgress size={18} /> : 'Update Status'}
+        </Button>
+        {statusChangeMutation.isError && (
+          <Alert severity="error" sx={{ py: 0, flex: '1 0 100%' }}>
+            Failed to change status. Check the allowed transitions.
+          </Alert>
+        )}
+      </Paper>
 
       {/* BL Alert Banner */}
       {blMissing && !blQuery.isLoading && (
