@@ -142,13 +142,11 @@ export default function BookingDetailPage() {
   const addContainerMutation = useMutation({
     mutationFn: () =>
       apiClient.post(`bookings/${bookingId}/containers/`, {
-        containers: [{
-          container_type: newContainerType,
-          container_size: newContainerSize,
-          container_count: 1,
-          container_no: newContainerNo,
-          seal_no: newSealNo,
-        }],
+        container_type: newContainerType,
+        container_size: newContainerSize,
+        container_count: 1,
+        container_no: newContainerNo,
+        seal_no: newSealNo,
       }),
     onSuccess: () => {
       setNewContainerNo('');
