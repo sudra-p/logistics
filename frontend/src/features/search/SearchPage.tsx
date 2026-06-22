@@ -361,16 +361,16 @@ export default function SearchPage() {
                       <StatusPill status={row.status} />
                     </td>
                     <td className="px-4 py-3 text-body-md text-on-surface">
-                      {row.pol}
+                      {row.pol_name || row.pol}
                     </td>
                     <td className="px-4 py-3 text-body-md text-on-surface">
-                      {row.pod}
+                      {row.pod_name || row.pod}
                     </td>
                     <td className="px-4 py-3 text-body-md text-on-surface">
-                      {row.client}
+                      {row.client_name || row.client}
                     </td>
                     <td className="px-4 py-3 text-body-md text-on-surface-variant">
-                      {row.shipping_line}
+                      {row.shipping_line_name || row.shipping_line}
                     </td>
                     <td className="px-4 py-3 text-body-md text-on-surface-variant">
                       {row.booking_date}

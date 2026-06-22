@@ -410,6 +410,10 @@ class BookingDetailSerializer(serializers.ModelSerializer):
     """Serializer for booking retrieval (read-only detail view)."""
 
     proforma_invoice = serializers.PrimaryKeyRelatedField(read_only=True)
+    client_name = serializers.CharField(source='client.name', read_only=True, default='')
+    shipping_line_name = serializers.CharField(source='shipping_line.name', read_only=True, default='')
+    pol_name = serializers.CharField(source='pol.name', read_only=True, default='')
+    pod_name = serializers.CharField(source='pod.name', read_only=True, default='')
 
     class Meta:
         model = Booking

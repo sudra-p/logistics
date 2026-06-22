@@ -7,9 +7,13 @@ export interface BookingSearchResult {
   id: number;
   job_number: string;
   client: string;
+  client_name: string;
   shipping_line: string;
+  shipping_line_name: string;
   pol: string;
+  pol_name: string;
   pod: string;
+  pod_name: string;
   status: string;
   booking_date: string;
 }
