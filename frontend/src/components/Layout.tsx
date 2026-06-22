@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/auth/useAuth';
 import type { Role } from '@/auth/types';
@@ -67,9 +67,23 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
+  const helpRef = useRef<HTMLDivElement>(null);
   const { user, logout, role } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false);
+      if (helpRef.current && !helpRef.current.contains(e.target as Node)) setHelpOpen(false);
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
 
   const userFullName = user ? `${user.first_name} ${user.last_name}` : '';
   const userInitials = user
@@ -182,16 +196,87 @@ export function Layout({ children }: LayoutProps) {
 
         {/* Right side icons + user */}
         <div className="flex items-center gap-2 flex-shrink-0">
-          {/* Notification icon */}
-          <button className="p-2 rounded-lg hover:bg-surface-variant text-on-surface-variant relative">
-            <span className="material-symbols-outlined text-[22px]">notifications</span>
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-error rounded-full" />
-          </button>
+          {/* Notification icon with dropdown */}
+          <div className="relative" ref={notifRef}>
+            <button
+              onClick={() => { setNotifOpen(!notifOpen); setHelpOpen(false); }}
+              className="p-2 rounded-lg hover:bg-surface-variant text-on-surface-variant relative"
+              aria-label="Notifications"
+            >
+              <span className="material-symbols-outlined text-[22px]">notifications</span>
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-error rounded-full" />
+            </button>
+            {notifOpen && (
+              <div className="absolute right-0 top-full mt-2 w-80 bg-surface rounded-xl border border-outline-variant shadow-lg z-50 overflow-hidden">
+                <div className="px-4 py-3 border-b border-outline-variant">
+                  <p className="text-title-sm font-semibold text-on-surface">Notifications</p>
+                </div>
+                <div className="max-h-64 overflow-y-auto">
+                  <div className="px-4 py-3 hover:bg-surface-variant/50 border-b border-outline-variant/50">
+                    <p className="text-body-sm text-on-surface font-medium">Payment overdue</p>
+                    <p className="text-body-sm text-on-surface-variant">Check pending payments in dashboard</p>
+                  </div>
+                  <div className="px-4 py-3 hover:bg-surface-variant/50 border-b border-outline-variant/50">
+                    <p className="text-body-sm text-on-surface font-medium">BL pending submission</p>
+                    <p className="text-body-sm text-on-surface-variant">Review draft BLs for active bookings</p>
+                  </div>
+                  <div className="px-4 py-3 hover:bg-surface-variant/50">
+                    <p className="text-body-sm text-on-surface font-medium">Low stock alert</p>
+                    <p className="text-body-sm text-on-surface-variant">Some inventory items are running low</p>
+                  </div>
+                </div>
+                <div className="px-4 py-2 border-t border-outline-variant">
+                  <button
+                    onClick={() => { navigate('/dashboard'); setNotifOpen(false); }}
+                    className="text-body-sm text-primary font-medium hover:underline"
+                  >
+                    View all alerts →
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
 
-          {/* Help icon */}
-          <button className="p-2 rounded-lg hover:bg-surface-variant text-on-surface-variant">
-            <span className="material-symbols-outlined text-[22px]">help</span>
-          </button>
+          {/* Help icon with modal */}
+          <div className="relative" ref={helpRef}>
+            <button
+              onClick={() => { setHelpOpen(!helpOpen); setNotifOpen(false); }}
+              className="p-2 rounded-lg hover:bg-surface-variant text-on-surface-variant"
+              aria-label="Help"
+            >
+              <span className="material-symbols-outlined text-[22px]">help</span>
+            </button>
+            {helpOpen && (
+              <div className="absolute right-0 top-full mt-2 w-72 bg-surface rounded-xl border border-outline-variant shadow-lg z-50 overflow-hidden">
+                <div className="px-4 py-3 border-b border-outline-variant">
+                  <p className="text-title-sm font-semibold text-on-surface">Help & Support</p>
+                </div>
+                <div className="p-4 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <span className="material-symbols-outlined text-primary text-[20px]">mail</span>
+                    <div>
+                      <p className="text-body-sm text-on-surface font-medium">Email Support</p>
+                      <p className="text-body-sm text-on-surface-variant">support@parthsudra.com</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="material-symbols-outlined text-primary text-[20px]">call</span>
+                    <div>
+                      <p className="text-body-sm text-on-surface font-medium">Phone</p>
+                      <p className="text-body-sm text-on-surface-variant">Contact administrator</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="material-symbols-outlined text-primary text-[20px]">info</span>
+                    <div>
+                      <p className="text-body-sm text-on-surface font-medium">Version</p>
+                      <p className="text-body-sm text-on-surface-variant">Logistics ERP v1.0</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Divider */}
           <div className="w-px h-8 bg-outline-variant mx-1 hidden sm:block" />
