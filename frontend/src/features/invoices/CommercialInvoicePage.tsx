@@ -220,6 +220,8 @@ export default function CommercialInvoicePage() {
     );
   }
 
+  // 404 is expected when no invoice exists yet — don't treat as error
+
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>

@@ -93,11 +93,16 @@ export const packingListKeys = {
  * Fetches the commercial invoice for a booking.
  */
 export function useCommercialInvoice(bookingId: number | null) {
-  return useQuery<CommercialInvoice>({
+  return useQuery<CommercialInvoice | null>({
     queryKey: invoiceKeys.detail(bookingId!),
     queryFn: async () => {
       const response = await apiClient.get(ENDPOINTS.BOOKING_COMMERCIAL_INVOICE(bookingId!));
-      return response.data;
+      const data = response.data;
+      // The endpoint returns an array — get the latest invoice (first item)
+      if (Array.isArray(data)) {
+        return data.length > 0 ? data[0] : null;
+      }
+      return data || null;
     },
     enabled: bookingId !== null,
     retry: false,
@@ -169,11 +174,16 @@ export function useFinalizeInvoice(invoiceId: number) {
  * Fetches the packing list for a booking.
  */
 export function usePackingList(bookingId: number | null) {
-  return useQuery<PackingList>({
+  return useQuery<PackingList | null>({
     queryKey: packingListKeys.detail(bookingId!),
     queryFn: async () => {
       const response = await apiClient.get(ENDPOINTS.BOOKING_PACKING_LIST(bookingId!));
-      return response.data;
+      const data = response.data;
+      // The endpoint returns an array — get the latest packing list
+      if (Array.isArray(data)) {
+        return data.length > 0 ? data[0] : null;
+      }
+      return data || null;
     },
     enabled: bookingId !== null,
     retry: false,
