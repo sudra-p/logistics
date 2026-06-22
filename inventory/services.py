@@ -44,7 +44,7 @@ class StockService:
 
             try:
                 stock = StockItem.objects.select_for_update().get(
-                    product_name=product_name
+                    product_name__iexact=product_name
                 )
             except StockItem.DoesNotExist:
                 raise ValidationError(

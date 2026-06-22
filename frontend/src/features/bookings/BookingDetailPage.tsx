@@ -29,6 +29,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  IconButton,
 } from '@mui/material';
 import DescriptionIcon from '@mui/icons-material/Description';
 import InventoryIcon from '@mui/icons-material/Inventory';
@@ -428,14 +429,28 @@ export default function BookingDetailPage() {
                         : '—'}
                     </TableCell>
                     <TableCell align="center">
-                      <Button
-                        variant="contained"
-                        size="small"
-                        disabled={container.stuffing_status === 'STUFFED'}
-                        onClick={() => openStuffingDialog(container)}
-                      >
-                        Mark as Stuffed
-                      </Button>
+                      <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                        <Button
+                          variant="contained"
+                          size="small"
+                          disabled={container.stuffing_status === 'STUFFED'}
+                          onClick={() => openStuffingDialog(container)}
+                        >
+                          Mark as Stuffed
+                        </Button>
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => {
+                            apiClient.delete(`bookings/${bookingId}/containers/${container.id}/`).then(() => {
+                              setContainersList((prev) => prev.filter((c) => c.id !== container.id));
+                            }).catch(() => {});
+                          }}
+                          aria-label="Delete container"
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
                     </TableCell>
                   </TableRow>
                 ))}
