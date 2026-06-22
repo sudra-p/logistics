@@ -69,11 +69,16 @@ export const blKeys = {
  * Fetches the Bill of Lading for a booking.
  */
 export function useBLForBooking(bookingId: number | null) {
-  return useQuery<BillOfLading>({
+  return useQuery<BillOfLading | null>({
     queryKey: blKeys.forBooking(bookingId!),
     queryFn: async () => {
       const response = await apiClient.get(ENDPOINTS.BOOKING_BL(bookingId!));
-      return response.data;
+      const data = response.data;
+      // The endpoint returns an array — get the latest BL
+      if (Array.isArray(data)) {
+        return data.length > 0 ? data[0] : null;
+      }
+      return data || null;
     },
     enabled: bookingId !== null,
     retry: false,
