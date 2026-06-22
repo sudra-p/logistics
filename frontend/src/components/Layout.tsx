@@ -24,6 +24,30 @@ const navItems: NavItem[] = [
     allowedRoles: ['Admin', 'Operations', 'Accounts', 'Sales'],
   },
   {
+    label: 'Operations',
+    path: '/operations',
+    icon: 'hub',
+    allowedRoles: ['Admin', 'Operations'],
+  },
+  {
+    label: 'Proforma Invoices',
+    path: '/proforma',
+    icon: 'receipt_long',
+    allowedRoles: ['Admin', 'Accounts', 'Sales'],
+  },
+  {
+    label: 'Payments',
+    path: '/payments',
+    icon: 'payments',
+    allowedRoles: ['Admin', 'Accounts'],
+  },
+  {
+    label: 'Inventory',
+    path: '/inventory',
+    icon: 'inventory_2',
+    allowedRoles: ['Admin', 'Operations'],
+  },
+  {
     label: 'Reports',
     path: '/reports',
     icon: 'assessment',

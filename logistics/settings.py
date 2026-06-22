@@ -165,6 +165,20 @@ CELERY_TIMEZONE = 'UTC'
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 300  # 5 minutes
 
+# Celery Beat Schedule
+from celery.schedules import crontab  # noqa: E402
+
+CELERY_BEAT_SCHEDULE = {
+    'check-payment-overdue-daily': {
+        'task': 'proforma.tasks.check_payment_overdue',
+        'schedule': crontab(hour=8, minute=0),  # Run daily at 8:00 AM UTC
+    },
+    'check-pending-bl-daily': {
+        'task': 'bl.tasks.check_pending_bl',
+        'schedule': crontab(hour=8, minute=30),  # Run daily at 8:30 AM UTC
+    },
+}
+
 
 # AWS S3 Configuration
 

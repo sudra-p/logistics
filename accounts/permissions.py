@@ -100,3 +100,118 @@ class CanManageMasterData(BasePermission):
         if not request.user or not request.user.is_authenticated:
             return False
         return _is_superuser(request.user) or _user_in_group(request.user, 'Admin')
+
+
+class CanManageProforma(BasePermission):
+    """
+    Allows write access to Proforma Invoices.
+    Granted to Accounts and Admin users.
+    """
+
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        return (
+            _is_superuser(request.user)
+            or _user_in_group(request.user, 'Accounts')
+            or _user_in_group(request.user, 'Admin')
+        )
+
+
+class CanViewProforma(BasePermission):
+    """
+    Allows read access to Proforma Invoices.
+    Granted to Accounts, Admin, and Sales users.
+    Sales users have additional queryset-level filtering applied in views.
+    """
+
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        return (
+            _is_superuser(request.user)
+            or _user_in_group(request.user, 'Accounts')
+            or _user_in_group(request.user, 'Admin')
+            or _user_in_group(request.user, 'Sales')
+        )
+
+
+class CanManagePayments(BasePermission):
+    """
+    Allows CRUD operations on Payment records.
+    Granted to Accounts and Admin users.
+    """
+
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        return (
+            _is_superuser(request.user)
+            or _user_in_group(request.user, 'Accounts')
+            or _user_in_group(request.user, 'Admin')
+        )
+
+
+class CanManageInventory(BasePermission):
+    """
+    Allows CRUD operations on Stock Item records.
+    Granted to Operations and Admin users.
+    """
+
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        return (
+            _is_superuser(request.user)
+            or _user_in_group(request.user, 'Operations')
+            or _user_in_group(request.user, 'Admin')
+        )
+
+
+class CanPerformStuffing(BasePermission):
+    """
+    Allows performing the container stuffing action.
+    Granted to Operations and Admin users.
+    """
+
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        return (
+            _is_superuser(request.user)
+            or _user_in_group(request.user, 'Operations')
+            or _user_in_group(request.user, 'Admin')
+        )
+
+
+class CanManageDocuments(BasePermission):
+    """
+    Allows CRUD operations on Commercial Invoices and Packing Lists.
+    Granted to Accounts, Operations, and Admin users.
+    """
+
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        return (
+            _is_superuser(request.user)
+            or _user_in_group(request.user, 'Accounts')
+            or _user_in_group(request.user, 'Operations')
+            or _user_in_group(request.user, 'Admin')
+        )
+
+
+class CanManageBL(BasePermission):
+    """
+    Allows CRUD operations on Bill of Lading records.
+    Granted to Operations and Admin users.
+    """
+
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        return (
+            _is_superuser(request.user)
+            or _user_in_group(request.user, 'Operations')
+            or _user_in_group(request.user, 'Admin')
+        )

@@ -174,12 +174,12 @@ Implement the Operations View API endpoint with filtering, sorting, and paginati
 Implement backend automation logic for auto-create booking, auto-fill documents, and alert generation.
 
 ### Steps
-- [ ] 13.1 In `proforma/services.py`, add `auto_create_booking(pi_id, user)` — creates Booking pre-filled with customer and expected_shipment_date from PI, links PI to Booking
-- [ ] 13.2 Add a Celery task `check_payment_overdue` that runs daily, identifies PIs in PAYMENT_PENDING for >30 days, and sends reminder email via SES
-- [ ] 13.3 Add a Celery task `check_pending_bl` that runs daily, identifies Bookings with status SHIPPED and no BL or BL in DRAFT for >7 days after ETD, and creates alert records
-- [ ] 13.4 Create an `Alert` model (or use the existing notification infrastructure) to store alert records with type, message, related_object, is_read, created_at
-- [ ] 13.5 Implement alert dismissal endpoint: PATCH `/api/alerts/{id}/dismiss/`
-- [ ] 13.6 Register Celery tasks in app config and add beat schedule for daily execution
+- [x] 13.1 In `proforma/services.py`, add `auto_create_booking(pi_id, user)` — creates Booking pre-filled with customer and expected_shipment_date from PI, links PI to Booking
+- [x] 13.2 Add a Celery task `check_payment_overdue` that runs daily, identifies PIs in PAYMENT_PENDING for >30 days, and sends reminder email via SES
+- [x] 13.3 Add a Celery task `check_pending_bl` that runs daily, identifies Bookings with status SHIPPED and no BL or BL in DRAFT for >7 days after ETD, and creates alert records
+- [x] 13.4 Create an `Alert` model (or use the existing notification infrastructure) to store alert records with type, message, related_object, is_read, created_at
+- [x] 13.5 Implement alert dismissal endpoint: PATCH `/api/alerts/{id}/dismiss/`
+- [x] 13.6 Register Celery tasks in app config and add beat schedule for daily execution
 
 ## Task 14: Enhanced Email Notifications
 
@@ -187,12 +187,12 @@ Implement backend automation logic for auto-create booking, auto-fill documents,
 Extend existing email notification service with PI data in booking confirmation and BL data in onboard confirmation.
 
 ### Steps
-- [ ] 14.1 Update `notifications/services.py` `send_booking_confirmation()` to include PI Number, Customer Name, and Total Amount when the Booking has a linked Proforma Invoice
-- [ ] 14.2 Update the booking confirmation HTML template to display PI information section
-- [ ] 14.3 Update `send_onboard_confirmation()` to include BL Number from the Booking's linked BillOfLading
-- [ ] 14.4 Update the onboard confirmation HTML template to display BL number in the container table
-- [ ] 14.5 Create `send_payment_reminder(pi_id)` method that sends overdue payment reminder to customer email
-- [ ] 14.6 Create payment reminder HTML email template
+- [x] 14.1 Update `notifications/services.py` `send_booking_confirmation()` to include PI Number, Customer Name, and Total Amount when the Booking has a linked Proforma Invoice
+- [x] 14.2 Update the booking confirmation HTML template to display PI information section
+- [x] 14.3 Update `send_onboard_confirmation()` to include BL Number from the Booking's linked BillOfLading
+- [x] 14.4 Update the onboard confirmation HTML template to display BL number in the container table
+- [x] 14.5 Create `send_payment_reminder(pi_id)` method that sends overdue payment reminder to customer email
+- [x] 14.6 Create payment reminder HTML email template
 
 ## Task 15: Permissions for New Features
 
@@ -200,14 +200,14 @@ Extend existing email notification service with PI data in booking confirmation 
 Add permission classes for the new feature endpoints following existing patterns.
 
 ### Steps
-- [ ] 15.1 Add `CanManageProforma` permission class: allows Accounts and Admin users write access
-- [ ] 15.2 Add `CanViewProforma` permission class: allows Accounts, Admin, and Sales users read access (Sales with queryset filtering)
-- [ ] 15.3 Add `CanManagePayments` permission class: allows Accounts and Admin users
-- [ ] 15.4 Add `CanManageInventory` permission class: allows Operations and Admin users
-- [ ] 15.5 Add `CanPerformStuffing` permission class: allows Operations and Admin users
-- [ ] 15.6 Add `CanManageDocuments` permission class: allows Accounts, Operations, and Admin users (for Commercial Invoice, Packing List)
-- [ ] 15.7 Add `CanManageBL` permission class: allows Operations and Admin users
-- [ ] 15.8 Apply permissions to all new viewsets and views
+- [x] 15.1 Add `CanManageProforma` permission class: allows Accounts and Admin users write access
+- [x] 15.2 Add `CanViewProforma` permission class: allows Accounts, Admin, and Sales users read access (Sales with queryset filtering)
+- [x] 15.3 Add `CanManagePayments` permission class: allows Accounts and Admin users
+- [x] 15.4 Add `CanManageInventory` permission class: allows Operations and Admin users
+- [x] 15.5 Add `CanPerformStuffing` permission class: allows Operations and Admin users
+- [x] 15.6 Add `CanManageDocuments` permission class: allows Accounts, Operations, and Admin users (for Commercial Invoice, Packing List)
+- [x] 15.7 Add `CanManageBL` permission class: allows Operations and Admin users
+- [x] 15.8 Apply permissions to all new viewsets and views
 
 ## Task 16: Frontend - Proforma Invoice Pages
 
@@ -215,15 +215,15 @@ Add permission classes for the new feature endpoints following existing patterns
 Build React frontend pages for Proforma Invoice management.
 
 ### Steps
-- [ ] 16.1 Create `frontend/src/features/proforma/` directory with page and component files
-- [ ] 16.2 Create `ProformaListPage.tsx` with table listing PIs (PI Number, Customer, Amount, Currency, Status, Date), pagination, and status filter
-- [ ] 16.3 Create `ProformaFormPage.tsx` with form for creating/editing PIs: customer dropdown, currency selector, date pickers, payment terms textarea, expected shipment date, and dynamic line item table (add/remove rows)
-- [ ] 16.4 Create `ProformaDetailPage.tsx` showing full PI details, linked bookings, payment history, and status actions (Send, Approve, etc.)
-- [ ] 16.5 Create `PIStatusBadge.tsx` component with color-coded status badges
-- [ ] 16.6 Create `LineItemTable.tsx` component for editable product line items with auto-calculated amount (qty × rate) and total
-- [ ] 16.7 Add API hooks using TanStack Query: `useProformaList`, `useProformaDetail`, `useCreateProforma`, `useUpdateProforma`, `useChangeProformaStatus`
-- [ ] 16.8 Add routes to React Router: `/proforma`, `/proforma/new`, `/proforma/:id`
-- [ ] 16.9 Add "Proforma Invoices" to Sidebar navigation with role-based visibility (Accounts, Admin, Sales)
+- [x] 16.1 Create `frontend/src/features/proforma/` directory with page and component files
+- [x] 16.2 Create `ProformaListPage.tsx` with table listing PIs (PI Number, Customer, Amount, Currency, Status, Date), pagination, and status filter
+- [x] 16.3 Create `ProformaFormPage.tsx` with form for creating/editing PIs: customer dropdown, currency selector, date pickers, payment terms textarea, expected shipment date, and dynamic line item table (add/remove rows)
+- [x] 16.4 Create `ProformaDetailPage.tsx` showing full PI details, linked bookings, payment history, and status actions (Send, Approve, etc.)
+- [x] 16.5 Create `PIStatusBadge.tsx` component with color-coded status badges
+- [x] 16.6 Create `LineItemTable.tsx` component for editable product line items with auto-calculated amount (qty × rate) and total
+- [x] 16.7 Add API hooks using TanStack Query: `useProformaList`, `useProformaDetail`, `useCreateProforma`, `useUpdateProforma`, `useChangeProformaStatus`
+- [x] 16.8 Add routes to React Router: `/proforma`, `/proforma/new`, `/proforma/:id`
+- [x] 16.9 Add "Proforma Invoices" to Sidebar navigation with role-based visibility (Accounts, Admin, Sales)
 
 ## Task 17: Frontend - Payment Pages
 
@@ -231,14 +231,14 @@ Build React frontend pages for Proforma Invoice management.
 Build React frontend pages for Payment management.
 
 ### Steps
-- [ ] 17.1 Create `frontend/src/features/payments/` directory
-- [ ] 17.2 Create `PaymentListPage.tsx` with table listing payments (PI Number, Customer, Amount, Mode, Date, Status)
-- [ ] 17.3 Create `PaymentFormPage.tsx` with form: PI selector (searchable dropdown), amount input, payment mode selector, date picker, reference number, notes
-- [ ] 17.4 Display read-only computed fields: Customer Name, PI Total Amount, Outstanding Balance
-- [ ] 17.5 Add validation: prevent submit if amount > outstanding balance
-- [ ] 17.6 Add API hooks: `usePaymentList`, `useCreatePayment`, `useProformaPayments`
-- [ ] 17.7 Add routes: `/payments`, `/payments/new`
-- [ ] 17.8 Add "Payments" to Sidebar navigation (Accounts, Admin only)
+- [x] 17.1 Create `frontend/src/features/payments/` directory
+- [x] 17.2 Create `PaymentListPage.tsx` with table listing payments (PI Number, Customer, Amount, Mode, Date, Status)
+- [x] 17.3 Create `PaymentFormPage.tsx` with form: PI selector (searchable dropdown), amount input, payment mode selector, date picker, reference number, notes
+- [x] 17.4 Display read-only computed fields: Customer Name, PI Total Amount, Outstanding Balance
+- [x] 17.5 Add validation: prevent submit if amount > outstanding balance
+- [x] 17.6 Add API hooks: `usePaymentList`, `useCreatePayment`, `useProformaPayments`
+- [x] 17.7 Add routes: `/payments`, `/payments/new`
+- [x] 17.8 Add "Payments" to Sidebar navigation (Accounts, Admin only)
 
 ## Task 18: Frontend - Inventory Pages
 
@@ -246,13 +246,13 @@ Build React frontend pages for Payment management.
 Build React frontend pages for Stock/Inventory management.
 
 ### Steps
-- [ ] 18.1 Create `frontend/src/features/inventory/` directory
-- [ ] 18.2 Create `StockListPage.tsx` with table showing: Product Name, Available Stock, Reserved Stock, Shipped Stock, Unit
-- [ ] 18.3 Create `StockFormPage.tsx` for creating/editing stock items
-- [ ] 18.4 Create `StockLevelIndicator.tsx` component showing visual bar for stock levels (green/yellow/red based on available quantity)
-- [ ] 18.5 Add API hooks: `useStockList`, `useCreateStockItem`, `useUpdateStockItem`
-- [ ] 18.6 Add routes: `/inventory`, `/inventory/new`, `/inventory/:id/edit`
-- [ ] 18.7 Add "Inventory" to Sidebar navigation (Operations, Admin only)
+- [x] 18.1 Create `frontend/src/features/inventory/` directory
+- [x] 18.2 Create `StockListPage.tsx` with table showing: Product Name, Available Stock, Reserved Stock, Shipped Stock, Unit
+- [x] 18.3 Create `StockFormPage.tsx` for creating/editing stock items
+- [x] 18.4 Create `StockLevelIndicator.tsx` component showing visual bar for stock levels (green/yellow/red based on available quantity)
+- [x] 18.5 Add API hooks: `useStockList`, `useCreateStockItem`, `useUpdateStockItem`
+- [x] 18.6 Add routes: `/inventory`, `/inventory/new`, `/inventory/:id/edit`
+- [x] 18.7 Add "Inventory" to Sidebar navigation (Operations, Admin only)
 
 ## Task 19: Frontend - Commercial Invoice and Packing List Pages
 
@@ -260,14 +260,14 @@ Build React frontend pages for Stock/Inventory management.
 Build React frontend pages for Commercial Invoice and Packing List management with auto-fill functionality.
 
 ### Steps
-- [ ] 19.1 Create `frontend/src/features/invoices/` directory
-- [ ] 19.2 Create `CommercialInvoicePage.tsx` — form/view for commercial invoice with editable line items (product, qty, rate, amount, net weight, gross weight, HS code, packages), auto-filled from PI on creation
-- [ ] 19.3 Create `PackingListPage.tsx` — form/view for packing list with line items (product, qty, packages, net weight, gross weight, package type), auto-filled from PI
-- [ ] 19.4 Create `DocumentVersionHistory.tsx` component showing revision history with revision number, date, and user
-- [ ] 19.5 Implement "Finalize" action button that locks the document and shows confirmation dialog
-- [ ] 19.6 Implement "Create Revision" button on finalized documents that creates editable copy
-- [ ] 19.7 Add API hooks: `useCommercialInvoice`, `useCreateInvoice`, `useFinalizeInvoice`, `usePackingList`, `useCreatePackingList`, `useFinalizePackingList`
-- [ ] 19.8 Access these pages from Booking detail page (linked from booking → documents section)
+- [x] 19.1 Create `frontend/src/features/invoices/` directory
+- [x] 19.2 Create `CommercialInvoicePage.tsx` — form/view for commercial invoice with editable line items (product, qty, rate, amount, net weight, gross weight, HS code, packages), auto-filled from PI on creation
+- [x] 19.3 Create `PackingListPage.tsx` — form/view for packing list with line items (product, qty, packages, net weight, gross weight, package type), auto-filled from PI
+- [x] 19.4 Create `DocumentVersionHistory.tsx` component showing revision history with revision number, date, and user
+- [x] 19.5 Implement "Finalize" action button that locks the document and shows confirmation dialog
+- [x] 19.6 Implement "Create Revision" button on finalized documents that creates editable copy
+- [x] 19.7 Add API hooks: `useCommercialInvoice`, `useCreateInvoice`, `useFinalizeInvoice`, `usePackingList`, `useCreatePackingList`, `useFinalizePackingList`
+- [x] 19.8 Access these pages from Booking detail page (linked from booking → documents section)
 
 ## Task 20: Frontend - Bill of Lading Pages
 
@@ -275,14 +275,14 @@ Build React frontend pages for Commercial Invoice and Packing List management wi
 Build React frontend pages for Bill of Lading management.
 
 ### Steps
-- [ ] 20.1 Create `frontend/src/features/bl/` directory
-- [ ] 20.2 Create `BLFormPage.tsx` with form: BL Number, BL Type (Line/Direct), Container Number, Vessel Name, Voyage Number, Shipper (dropdown), Consignee (dropdown), Notify Party (textarea), Cargo Description (textarea) — auto-filled where data is available
-- [ ] 20.3 Create `BLDetailPage.tsx` showing full BL details with status actions (Submit, Release)
-- [ ] 20.4 Create `BLStatusBadge.tsx` component with color-coded badges
-- [ ] 20.5 Show auto-fill preview when creating BL for a booking with existing Commercial Invoice
-- [ ] 20.6 Add API hooks: `useBLForBooking`, `useCreateBL`, `useUpdateBL`, `useChangeBLStatus`
-- [ ] 20.7 Access BL pages from Booking detail page (documents section)
-- [ ] 20.8 Add alert banner on Booking detail when BL is missing or pending
+- [x] 20.1 Create `frontend/src/features/bl/` directory
+- [x] 20.2 Create `BLFormPage.tsx` with form: BL Number, BL Type (Line/Direct), Container Number, Vessel Name, Voyage Number, Shipper (dropdown), Consignee (dropdown), Notify Party (textarea), Cargo Description (textarea) — auto-filled where data is available
+- [x] 20.3 Create `BLDetailPage.tsx` showing full BL details with status actions (Submit, Release)
+- [x] 20.4 Create `BLStatusBadge.tsx` component with color-coded badges
+- [x] 20.5 Show auto-fill preview when creating BL for a booking with existing Commercial Invoice
+- [x] 20.6 Add API hooks: `useBLForBooking`, `useCreateBL`, `useUpdateBL`, `useChangeBLStatus`
+- [x] 20.7 Access BL pages from Booking detail page (documents section)
+- [x] 20.8 Add alert banner on Booking detail when BL is missing or pending
 
 ## Task 21: Frontend - Enhanced Dashboard
 
@@ -290,17 +290,17 @@ Build React frontend pages for Bill of Lading management.
 Build the enhanced dashboard page with KPI cards and workflow sections.
 
 ### Steps
-- [ ] 21.1 Create `frontend/src/features/dashboard/` directory with DashboardPage and components
-- [ ] 21.2 Create `KPICard.tsx` component (reusable card with title, value, icon, optional trend indicator)
-- [ ] 21.3 Create `DashboardPage.tsx` with layout: KPI cards row at top, then tabbed/sectioned workflow areas below
-- [ ] 21.4 Implement KPI cards section: Total PIs, Pending Payments, Active Shipments, Containers in Transit, Stock Available
-- [ ] 21.5 Create `ProformaStatusSection.tsx` — table of non-Paid PIs with status badges
-- [ ] 21.6 Create `ReadyForBookingSection.tsx` — table of Paid PIs without bookings, with "Create Booking" action button
-- [ ] 21.7 Create `CurrentShipmentsSection.tsx` — table of active bookings with container/shipment info
-- [ ] 21.8 Create `DocumentStatusSection.tsx` — counts of pending invoices, packing lists, BLs with links
-- [ ] 21.9 Create `AlertsSection.tsx` — list of alerts (overdue payments, shipment delays, missing BLs) with dismiss action
-- [ ] 21.10 Add API hooks: `useDashboardKPIs`, `useProformaStatus`, `useReadyForBooking`, `useCurrentShipments`, `useDocumentStatus`, `useAlerts`
-- [ ] 21.11 Set Dashboard as the landing page after login, add to Sidebar as first item
+- [x] 21.1 Create `frontend/src/features/dashboard/` directory with DashboardPage and components
+- [x] 21.2 Create `KPICard.tsx` component (reusable card with title, value, icon, optional trend indicator)
+- [x] 21.3 Create `DashboardPage.tsx` with layout: KPI cards row at top, then tabbed/sectioned workflow areas below
+- [x] 21.4 Implement KPI cards section: Total PIs, Pending Payments, Active Shipments, Containers in Transit, Stock Available
+- [x] 21.5 Create `ProformaStatusSection.tsx` — table of non-Paid PIs with status badges
+- [x] 21.6 Create `ReadyForBookingSection.tsx` — table of Paid PIs without bookings, with "Create Booking" action button
+- [x] 21.7 Create `CurrentShipmentsSection.tsx` — table of active bookings with container/shipment info
+- [x] 21.8 Create `DocumentStatusSection.tsx` — counts of pending invoices, packing lists, BLs with links
+- [x] 21.9 Create `AlertsSection.tsx` — list of alerts (overdue payments, shipment delays, missing BLs) with dismiss action
+- [x] 21.10 Add API hooks: `useDashboardKPIs`, `useProformaStatus`, `useReadyForBooking`, `useCurrentShipments`, `useDocumentStatus`, `useAlerts`
+- [x] 21.11 Set Dashboard as the landing page after login, add to Sidebar as first item
 
 ## Task 22: Frontend - Operations Tracking View
 
@@ -308,14 +308,14 @@ Build the enhanced dashboard page with KPI cards and workflow sections.
 Build the Operations tracking page with table, filters, and sorting.
 
 ### Steps
-- [ ] 22.1 Create `frontend/src/features/operations/` directory
-- [ ] 22.2 Create `OperationsPage.tsx` with full-width table showing: PI No, Booking No, Consignee, Shipping Line, Container Type, Vessel, Voyage, POL, POD, FPD, ETD, ETA, Forwarder
-- [ ] 22.3 Create filter bar with: Customer dropdown, Shipping Line dropdown, Status dropdown, ETD date range picker, POL dropdown
-- [ ] 22.4 Implement column sorting (clickable headers)
-- [ ] 22.5 Add pagination controls with configurable page size
-- [ ] 22.6 Add API hook: `useOperationsView` with filter/sort/pagination params
-- [ ] 22.7 Add routes: `/operations`
-- [ ] 22.8 Add "Operations" to Sidebar navigation (Operations, Admin only)
+- [x] 22.1 Create `frontend/src/features/operations/` directory
+- [x] 22.2 Create `OperationsPage.tsx` with full-width table showing: PI No, Booking No, Consignee, Shipping Line, Container Type, Vessel, Voyage, POL, POD, FPD, ETD, ETA, Forwarder
+- [x] 22.3 Create filter bar with: Customer dropdown, Shipping Line dropdown, Status dropdown, ETD date range picker, POL dropdown
+- [x] 22.4 Implement column sorting (clickable headers)
+- [x] 22.5 Add pagination controls with configurable page size
+- [x] 22.6 Add API hook: `useOperationsView` with filter/sort/pagination params
+- [x] 22.7 Add routes: `/operations`
+- [x] 22.8 Add "Operations" to Sidebar navigation (Operations, Admin only)
 
 ## Task 23: Frontend - Container Stuffing UI
 
@@ -323,13 +323,13 @@ Build the Operations tracking page with table, filters, and sorting.
 Build the container stuffing action interface within the booking detail page.
 
 ### Steps
-- [ ] 23.1 Add "Stuffing" section to Booking detail page showing containers with their stuffing status
-- [ ] 23.2 Create stuffing action dialog/modal: shows products from linked PI, allows entering quantities per product for the container
-- [ ] 23.3 Add validation: quantity per product must not exceed available stock (show available stock in the form)
-- [ ] 23.4 Add "Mark as Stuffed" button per container (disabled if already stuffed)
-- [ ] 23.5 Show confirmation dialog before performing stuffing action (irreversible stock impact)
-- [ ] 23.6 Add API hook: `usePerformStuffing` that calls POST `/api/bookings/{id}/containers/{cid}/stuff/`
-- [ ] 23.7 Update container list display to show stuffing status badge and stuffed_at timestamp
+- [x] 23.1 Add "Stuffing" section to Booking detail page showing containers with their stuffing status
+- [x] 23.2 Create stuffing action dialog/modal: shows products from linked PI, allows entering quantities per product for the container
+- [x] 23.3 Add validation: quantity per product must not exceed available stock (show available stock in the form)
+- [x] 23.4 Add "Mark as Stuffed" button per container (disabled if already stuffed)
+- [x] 23.5 Show confirmation dialog before performing stuffing action (irreversible stock impact)
+- [x] 23.6 Add API hook: `usePerformStuffing` that calls POST `/api/bookings/{id}/containers/{cid}/stuff/`
+- [x] 23.7 Update container list display to show stuffing status badge and stuffed_at timestamp
 
 ## Task 24: Frontend - Role-Based Navigation and Guards
 
@@ -337,11 +337,11 @@ Build the container stuffing action interface within the booking detail page.
 Update frontend routing and navigation to enforce role-based access for all new features.
 
 ### Steps
-- [ ] 24.1 Update `RoleGuard.tsx` to support the new feature routes with appropriate role checks
-- [ ] 24.2 Update `Sidebar.tsx` to conditionally show new navigation items based on user role: Dashboard (all), Proforma (Accounts, Admin, Sales), Payments (Accounts, Admin), Inventory (Operations, Admin), Operations View (Operations, Admin), BL (Operations, Admin)
-- [ ] 24.3 Add route definitions for all new pages in the router configuration
-- [ ] 24.4 Ensure Sales_Users see filtered data on Proforma list (handled by backend, but show "My Proformas" label)
-- [ ] 24.5 Add proper error boundary handling for 403 responses — show "Access Denied" page
+- [x] 24.1 Update `RoleGuard.tsx` to support the new feature routes with appropriate role checks
+- [x] 24.2 Update `Sidebar.tsx` to conditionally show new navigation items based on user role: Dashboard (all), Proforma (Accounts, Admin, Sales), Payments (Accounts, Admin), Inventory (Operations, Admin), Operations View (Operations, Admin), BL (Operations, Admin)
+- [x] 24.3 Add route definitions for all new pages in the router configuration
+- [x] 24.4 Ensure Sales_Users see filtered data on Proforma list (handled by backend, but show "My Proformas" label)
+- [x] 24.5 Add proper error boundary handling for 403 responses — show "Access Denied" page
 
 ## Task 25: Backend Tests
 
@@ -349,17 +349,17 @@ Update frontend routing and navigation to enforce role-based access for all new 
 Write comprehensive tests for all new backend functionality.
 
 ### Steps
-- [ ] 25.1 Write tests for ProformaInvoice CRUD and PI number generation (test uniqueness, format, sequential behavior)
-- [ ] 25.2 Write tests for PI status transitions (valid and invalid transitions)
-- [ ] 25.3 Write tests for Payment creation with validation (exceed balance, negative amounts, valid creation)
-- [ ] 25.4 Write tests for Payment status auto-computation (partial paid, fully paid)
-- [ ] 25.5 Write tests for StockItem CRUD and constraints (non-negative values)
-- [ ] 25.6 Write tests for stuffing action: successful deduction, insufficient stock rejection, atomicity (no partial deductions), duplicate stuffing rejection
-- [ ] 25.7 Write tests for Commercial Invoice creation with auto-fill from PI, finalization, versioning
-- [ ] 25.8 Write tests for Packing List creation, finalization, versioning
-- [ ] 25.9 Write tests for BL creation with auto-fill, status transitions, validation
-- [ ] 25.10 Write tests for Booking status extension (new transitions, stuffing prerequisite for SHIPPED)
-- [ ] 25.11 Write tests for Dashboard KPI computation
-- [ ] 25.12 Write tests for role-based access control on all new endpoints
-- [ ] 25.13 Write tests for partial shipment allocation (allocation does not exceed PI line item quantity)
-- [ ] 25.14 Write tests for auto-create booking from paid PI
+- [x] 25.1 Write tests for ProformaInvoice CRUD and PI number generation (test uniqueness, format, sequential behavior)
+- [x] 25.2 Write tests for PI status transitions (valid and invalid transitions)
+- [x] 25.3 Write tests for Payment creation with validation (exceed balance, negative amounts, valid creation)
+- [x] 25.4 Write tests for Payment status auto-computation (partial paid, fully paid)
+- [x] 25.5 Write tests for StockItem CRUD and constraints (non-negative values)
+- [x] 25.6 Write tests for stuffing action: successful deduction, insufficient stock rejection, atomicity (no partial deductions), duplicate stuffing rejection
+- [x] 25.7 Write tests for Commercial Invoice creation with auto-fill from PI, finalization, versioning
+- [x] 25.8 Write tests for Packing List creation, finalization, versioning
+- [x] 25.9 Write tests for BL creation with auto-fill, status transitions, validation
+- [x] 25.10 Write tests for Booking status extension (new transitions, stuffing prerequisite for SHIPPED)
+- [x] 25.11 Write tests for Dashboard KPI computation
+- [x] 25.12 Write tests for role-based access control on all new endpoints
+- [x] 25.13 Write tests for partial shipment allocation (allocation does not exceed PI line item quantity)
+- [x] 25.14 Write tests for auto-create booking from paid PI

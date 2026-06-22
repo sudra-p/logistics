@@ -11,6 +11,7 @@ from logistics.views import health_check
 from invoices.urls import booking_urlpatterns as invoice_booking_urls
 from invoices.urls import packing_list_urlpatterns as packing_list_urls
 from bl.urls import booking_urlpatterns as bl_booking_urls
+from dashboard.urls import alert_urlpatterns
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -33,6 +34,8 @@ urlpatterns = [
     path('api/bookings/', include(bl_booking_urls)),
     # Dashboard
     path('api/dashboard/', include('dashboard.urls', namespace='dashboard')),
+    # Alerts
+    path('api/alerts/', include(alert_urlpatterns)),
     # Operations Tracking
     path('api/operations/', include('operations.urls', namespace='operations')),
 ]

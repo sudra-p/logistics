@@ -6,7 +6,7 @@ from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from accounts.permissions import IsAccountsUser, IsAdminUser
+from accounts.permissions import CanManagePayments
 from payments.models import Payment
 from payments.serializers import PaymentCreateSerializer, PaymentDetailSerializer
 from payments.services import PaymentService
@@ -31,7 +31,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         """Only Accounts or Admin users can access payments."""
-        return [IsAuthenticated(), IsAccountsUser() | IsAdminUser()]
+        return [IsAuthenticated(), CanManagePayments()]
 
     def get_serializer_class(self):
         if self.action == 'create':

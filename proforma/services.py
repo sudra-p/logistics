@@ -8,6 +8,7 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
+from bookings.models import Booking
 from proforma.models import ProformaInvoice, ProformaLineItem
 
 
@@ -156,3 +157,62 @@ class ProformaService:
         pi.save(update_fields=['status'])
 
         return pi
+
+
+@transaction.atomic
+def auto_create_booking(pi_id, user, **booking_data):
+    """
+    Auto-create a Booking pre-filled with data from a Proforma Invoice.
+
+    Validates that the PI is in PAID status, then creates a Booking with:
+    - client from PI.customer
+    - booking_date and forwarding window dates from PI.expected_shipment_date
+    - proforma_invoice linked to the PI
+    - status set to PENDING
+
+    Any additional required booking fields (e.g. shipping_line, pol, pod,
+    commodity, cargo_type, shipment_type, stuffing_type) can be passed via
+    booking_data keyword arguments.
+
+    Args:
+        pi_id: ID of the ProformaInvoice to create a booking from.
+        user: The authenticated user triggering the auto-creation.
+        **booking_data: Additional Booking field values to set on the new
+            booking (overrides pre-filled values if provided).
+
+    Returns:
+        The created Booking instance.
+
+    Raises:
+        Http404 if PI not found.
+        serializers.ValidationError if PI is not in PAID status.
+    """
+    pi = get_object_or_404(ProformaInvoice, pk=pi_id)
+
+    if pi.status != ProformaInvoice.Status.PAID:
+        raise serializers.ValidationError({
+            'detail': (
+                'Cannot auto-create booking. '
+                'Proforma Invoice must be in PAID status.'
+            )
+        })
+
+    # Pre-fill fields from the Proforma Invoice
+    defaults = {
+        'client': pi.customer,
+        'proforma_invoice': pi,
+        'booking_date': pi.expected_shipment_date,
+        'booking_validity_date': pi.expected_shipment_date,
+        'forwarding_window_start': pi.expected_shipment_date,
+        'forwarding_window_end': pi.expected_shipment_date,
+        'status': Booking.Status.PENDING,
+        'created_by': user,
+    }
+
+    # Allow caller to override or supply additional fields
+    defaults.update(booking_data)
+
+    booking = Booking(**defaults)
+    booking.save()
+
+    return booking

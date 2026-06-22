@@ -7,7 +7,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from accounts.permissions import IsAdminUser, IsOperationsUser
+from accounts.permissions import CanManageBL
 
 from .models import BillOfLading
 from .serializers import (
@@ -29,10 +29,7 @@ class BookingBLView(viewsets.ViewSet):
 
     def get_permissions(self):
         if self.action == 'create':
-            return [
-                IsAuthenticated(),
-                IsOperationsUser() | IsAdminUser(),
-            ]
+            return [IsAuthenticated(), CanManageBL()]
         return [IsAuthenticated()]
 
     def create(self, request, booking_id=None):
@@ -73,10 +70,7 @@ class BLDetailView(viewsets.ViewSet):
 
     def get_permissions(self):
         if self.action in ('partial_update', 'change_status'):
-            return [
-                IsAuthenticated(),
-                IsOperationsUser() | IsAdminUser(),
-            ]
+            return [IsAuthenticated(), CanManageBL()]
         return [IsAuthenticated()]
 
     def retrieve(self, request, pk=None):

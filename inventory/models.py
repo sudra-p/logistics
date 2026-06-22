@@ -1,6 +1,20 @@
 from django.db import models
 
 
+UNIT_CHOICES = [
+    ('units', 'Units'),
+    ('kg', 'Kilograms (kg)'),
+    ('bags', 'Bags'),
+    ('tonnes', 'Tonnes'),
+    ('litres', 'Litres'),
+    ('meters', 'Meters'),
+    ('pieces', 'Pieces'),
+    ('boxes', 'Boxes'),
+    ('cartons', 'Cartons'),
+    ('pallets', 'Pallets'),
+]
+
+
 class StockItem(models.Model):
     """Inventory stock item for tracking available, reserved, and shipped quantities."""
 
@@ -8,7 +22,7 @@ class StockItem(models.Model):
     available_stock = models.PositiveIntegerField(default=0)
     reserved_stock = models.PositiveIntegerField(default=0)
     shipped_stock = models.PositiveIntegerField(default=0)
-    unit = models.CharField(max_length=50, default='units')
+    unit = models.CharField(max_length=50, default='units', choices=UNIT_CHOICES)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:

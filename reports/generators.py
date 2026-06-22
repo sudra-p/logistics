@@ -33,7 +33,7 @@ class ReportGenerator:
             filters = {}
 
         queryset = Booking.objects.filter(
-            status__in=[Booking.Status.PENDING, Booking.Status.DO_BOOKING_EDIT]
+            status__in=[Booking.Status.PENDING, Booking.Status.BOOKED]
         )
 
         # Apply client filter

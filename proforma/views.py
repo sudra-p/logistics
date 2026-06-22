@@ -7,7 +7,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from accounts.permissions import IsAccountsUser, IsAdminUser, IsSalesUser
+from accounts.permissions import CanManageProforma, CanViewProforma
 from proforma.models import ProformaInvoice
 from proforma.serializers import (
     ProformaInvoiceCreateSerializer,
@@ -34,14 +34,14 @@ class ProformaInvoiceViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         """
-        Write operations: Accounts or Admin.
-        Read operations: Accounts, Admin, or Sales.
+        Write operations: CanManageProforma (Accounts or Admin).
+        Read operations: CanViewProforma (Accounts, Admin, or Sales).
         Superuser bypasses all group checks (handled inside permission classes).
         """
         if self.action in ('create', 'update', 'partial_update', 'destroy', 'change_status'):
-            return [IsAuthenticated(), IsAccountsUser() | IsAdminUser()]
+            return [IsAuthenticated(), CanManageProforma()]
         # Read access: Accounts, Admin, or Sales
-        return [IsAuthenticated(), IsAccountsUser() | IsAdminUser() | IsSalesUser()]
+        return [IsAuthenticated(), CanViewProforma()]
 
     def get_queryset(self):
         """

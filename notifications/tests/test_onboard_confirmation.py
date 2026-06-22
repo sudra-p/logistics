@@ -8,6 +8,7 @@ Covers:
 - CommunicationLog created on success
 - Task triggered on status change to COMPLETED
 - Retry logic on SES failure
+- BL Number from linked BillOfLading model
 """
 
 from datetime import date, timedelta
@@ -19,12 +20,15 @@ from django.contrib.auth import get_user_model
 from django.template.loader import render_to_string
 from django.test import TestCase, override_settings
 
+from bl.models import BillOfLading
 from bookings.models import Booking, CommunicationLog, Container
 from master_data.models import (
     Client,
     Commodity,
+    Consignee,
     ContainerType,
     Port,
+    Shipper,
     ShippingLine,
     Vessel,
 )
@@ -509,3 +513,171 @@ class TestStatusChangeTriggersOnboardEmail(TestCase):
         )
 
         mock_delay.assert_not_called()
+
+
+@pytest.mark.django_db
+class TestOnboardConfirmationBLNumber(TestCase):
+    """Tests for BL Number sourced from the linked BillOfLading model."""
+
+    def setUp(self):
+        """Set up test data."""
+        self.user = User.objects.create_user(
+            username='testops_bl', password='testpass123'
+        )
+        self.client_entity = Client.objects.create(
+            name='BL Client', email='blclient@example.com'
+        )
+        self.shipping_line = ShippingLine.objects.create(
+            name='Hapag BL', code='HLCU'
+        )
+        self.pol = Port.objects.create(name='Nhava Sheva BL', code='INNSA', country='India')
+        self.pod = Port.objects.create(name='Jebel Ali BL', code='AEJEA', country='UAE')
+        self.fpd = Port.objects.create(name='Dammam BL', code='SADMM', country='Saudi Arabia')
+        self.commodity = Commodity.objects.create(name='Rice BL', hs_code='1006')
+        self.vessel = Vessel.objects.create(name='Hapag Berlin', imo_number='9601234')
+        self.container_type = ContainerType.objects.create(name='Dry BL', code='DRYBL')
+        self.shipper = Shipper.objects.create(name='BL Shipper')
+        self.consignee = Consignee.objects.create(name='BL Consignee')
+
+        self.booking = Booking.objects.create(
+            booking_no='BK-BL-001',
+            booking_date=date.today(),
+            booking_validity_date=date.today() + timedelta(days=30),
+            forwarding_window_start=date.today(),
+            forwarding_window_end=date.today() + timedelta(days=14),
+            shipping_line=self.shipping_line,
+            pol=self.pol,
+            pod=self.pod,
+            fpd=self.fpd,
+            client=self.client_entity,
+            commodity=self.commodity,
+            vessel=self.vessel,
+            voyage='V200',
+            cargo_type=Booking.CargoType.FCL,
+            shipment_type='Export',
+            stuffing_type='Factory',
+            hbl_no='HBL-FALLBACK',
+            created_by=self.user,
+        )
+
+        Container.objects.create(
+            booking=self.booking,
+            container_type=self.container_type,
+            container_size='20FT',
+            container_count=1,
+            container_no='HLCU1234567',
+            seal_no='SEAL-BL-001',
+        )
+
+    @override_settings(
+        DISTRIBUTION_LIST=['ops@company.com'],
+        AWS_SES_FROM_EMAIL='noreply@logistics.example.com',
+        AWS_SES_REGION='ap-south-1',
+        AWS_ACCESS_KEY_ID='test-key',
+        AWS_SECRET_ACCESS_KEY='test-secret',
+    )
+    @patch('notifications.services.boto3.client')
+    def test_bl_number_from_linked_bill_of_lading(self, mock_boto_client):
+        """Test that BL number is sourced from the linked BillOfLading model."""
+        mock_ses = MagicMock()
+        mock_boto_client.return_value = mock_ses
+
+        # Create a linked BillOfLading
+        BillOfLading.objects.create(
+            booking=self.booking,
+            bl_number='HLCU-BL-2024-001',
+            bl_type=BillOfLading.BLType.LINE,
+            container_number='HLCU1234567',
+            vessel_name='Hapag Berlin',
+            voyage_number='V200',
+            shipper=self.shipper,
+            consignee=self.consignee,
+            created_by=self.user,
+        )
+
+        service = EmailNotificationService()
+        service.send_onboard_confirmation(self.booking.id)
+
+        call_kwargs = mock_ses.send_email.call_args[1]
+        html_body = call_kwargs['Message']['Body']['Html']['Data']
+
+        # BL number from BillOfLading model should be used, NOT hbl_no fallback
+        assert 'HLCU-BL-2024-001' in html_body
+        assert 'HBL-FALLBACK' not in html_body
+
+    @override_settings(
+        DISTRIBUTION_LIST=['ops@company.com'],
+        AWS_SES_FROM_EMAIL='noreply@logistics.example.com',
+        AWS_SES_REGION='ap-south-1',
+        AWS_ACCESS_KEY_ID='test-key',
+        AWS_SECRET_ACCESS_KEY='test-secret',
+    )
+    @patch('notifications.services.boto3.client')
+    def test_bl_number_falls_back_to_hbl_no(self, mock_boto_client):
+        """Test that BL number falls back to booking.hbl_no when no BillOfLading linked."""
+        mock_ses = MagicMock()
+        mock_boto_client.return_value = mock_ses
+
+        # No BillOfLading record linked - should use hbl_no fallback
+        service = EmailNotificationService()
+        service.send_onboard_confirmation(self.booking.id)
+
+        call_kwargs = mock_ses.send_email.call_args[1]
+        html_body = call_kwargs['Message']['Body']['Html']['Data']
+
+        # Should use hbl_no as fallback
+        assert 'HBL-FALLBACK' in html_body
+
+    @override_settings(
+        DISTRIBUTION_LIST=['ops@company.com'],
+        AWS_SES_FROM_EMAIL='noreply@logistics.example.com',
+        AWS_SES_REGION='ap-south-1',
+        AWS_ACCESS_KEY_ID='test-key',
+        AWS_SECRET_ACCESS_KEY='test-secret',
+    )
+    @patch('notifications.services.boto3.client')
+    def test_bl_number_falls_back_to_mbl_no(self, mock_boto_client):
+        """Test that BL number falls back to booking.mbl_no when no BL and no hbl_no."""
+        mock_ses = MagicMock()
+        mock_boto_client.return_value = mock_ses
+
+        # Clear hbl_no and set mbl_no
+        self.booking.hbl_no = ''
+        self.booking.mbl_no = 'MBL-FALLBACK'
+        self.booking.save()
+
+        service = EmailNotificationService()
+        service.send_onboard_confirmation(self.booking.id)
+
+        call_kwargs = mock_ses.send_email.call_args[1]
+        html_body = call_kwargs['Message']['Body']['Html']['Data']
+
+        # Should fall back to mbl_no
+        assert 'MBL-FALLBACK' in html_body
+
+    @override_settings(
+        DISTRIBUTION_LIST=['ops@company.com'],
+        AWS_SES_FROM_EMAIL='noreply@logistics.example.com',
+        AWS_SES_REGION='ap-south-1',
+        AWS_ACCESS_KEY_ID='test-key',
+        AWS_SECRET_ACCESS_KEY='test-secret',
+    )
+    @patch('notifications.services.boto3.client')
+    def test_bl_number_empty_when_no_sources(self, mock_boto_client):
+        """Test BL number is empty when no BillOfLading and no booking BL fields."""
+        mock_ses = MagicMock()
+        mock_boto_client.return_value = mock_ses
+
+        # Clear all BL number sources
+        self.booking.hbl_no = ''
+        self.booking.mbl_no = ''
+        self.booking.save()
+
+        service = EmailNotificationService()
+        service.send_onboard_confirmation(self.booking.id)
+
+        call_kwargs = mock_ses.send_email.call_args[1]
+        html_body = call_kwargs['Message']['Body']['Html']['Data']
+
+        # Should render without errors - no BL text means empty td cell
+        assert 'None' not in html_body

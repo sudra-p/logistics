@@ -7,7 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from accounts.permissions import IsAdminUser, IsOperationsUser
+from accounts.permissions import CanManageInventory, CanPerformStuffing
 from bookings.models import Container
 from bookings.serializers import ContainerDetailSerializer
 from inventory.models import StockItem
@@ -20,10 +20,10 @@ class StockItemViewSet(viewsets.ModelViewSet):
 
     queryset = StockItem.objects.all()
     serializer_class = StockItemSerializer
-    permission_classes = [IsAuthenticated, (IsOperationsUser | IsAdminUser)]
+    permission_classes = [IsAuthenticated, CanManageInventory]
 
     def get_permissions(self):
-        return [IsAuthenticated(), IsOperationsUser() | IsAdminUser()]
+        return [IsAuthenticated(), CanManageInventory()]
 
 
 class StuffingView(APIView):
@@ -32,10 +32,10 @@ class StuffingView(APIView):
     URL: /api/bookings/{booking_id}/containers/{container_id}/stuff/
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, CanPerformStuffing]
 
     def get_permissions(self):
-        return [IsAuthenticated(), IsOperationsUser() | IsAdminUser()]
+        return [IsAuthenticated(), CanPerformStuffing()]
 
     def post(self, request, booking_id, container_id):
         """Perform stuffing action on a container."""

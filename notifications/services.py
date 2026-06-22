@@ -44,6 +44,9 @@ class EmailNotificationService:
 
         Handles missing/invalid client email by logging the failure
         and still sending to the distribution list.
+
+        If the Booking has a linked Proforma Invoice, includes PI Number,
+        Customer Name, and Total Amount in the email template context.
         """
         booking = Booking.objects.select_related(
             'client',
@@ -52,6 +55,8 @@ class EmailNotificationService:
             'pod',
             'por',
             'vessel',
+            'proforma_invoice',
+            'proforma_invoice__customer',
         ).prefetch_related('containers__container_type').get(pk=booking_id)
 
         # Build recipient list
@@ -114,6 +119,13 @@ class EmailNotificationService:
             'eta': booking.eta_destination.strftime('%d-%b-%Y %H:%M') if booking.eta_destination else 'TBD',
         }
 
+        # Include Proforma Invoice data if linked
+        if booking.proforma_invoice:
+            pi = booking.proforma_invoice
+            context['pi_number'] = pi.pi_number
+            context['pi_customer_name'] = pi.customer.name if pi.customer else ''
+            context['pi_total_amount'] = f"{pi.total_amount} {pi.currency}"
+
         html_body = render_to_string(
             'notifications/booking_confirmation.html', context
         )
@@ -169,7 +181,7 @@ class EmailNotificationService:
             'pod',
             'fpd',
             'vessel',
-        ).prefetch_related('containers').get(pk=booking_id)
+        ).prefetch_related('containers', 'bills_of_lading').get(pk=booking_id)
 
         # Build recipient list
         distribution_list = self._get_distribution_list()
@@ -194,6 +206,14 @@ class EmailNotificationService:
 
         recipients = [client_email.strip()] + distribution_list
 
+        # Determine BL number: prefer BillOfLading model, fall back to booking fields
+        bl_number = ''
+        bl_record = booking.bills_of_lading.first()
+        if bl_record:
+            bl_number = bl_record.bl_number
+        else:
+            bl_number = booking.hbl_no or booking.mbl_no or ''
+
         # Build container data for table
         containers = booking.containers.all()
         container_rows = []
@@ -204,7 +224,7 @@ class EmailNotificationService:
                 'container_size': container.get_container_size_display() if container.container_size else '',
                 'fpd': booking.fpd.name if booking.fpd else '',
                 'shipping_line': booking.shipping_line.name if booking.shipping_line else '',
-                'bl_no': booking.hbl_no or booking.mbl_no or '',
+                'bl_no': bl_number,
             })
 
         # Render email template
@@ -251,6 +271,78 @@ class EmailNotificationService:
             logger.error(
                 'Booking %s: Failed to send onboard confirmation email: %s',
                 booking.job_number,
+                str(e),
+            )
+            raise
+
+    def send_payment_reminder(self, pi_id):
+        """
+        Send a payment reminder email for an overdue Proforma Invoice.
+
+        Args:
+            pi_id: ID of the ProformaInvoice to send reminder for.
+
+        Looks up the ProformaInvoice and its customer, renders the payment
+        reminder HTML template, and sends the email via SES to the customer
+        email + distribution list.
+
+        Raises ClientError if SES send fails (to allow caller retry logic).
+        """
+        from proforma.models import ProformaInvoice
+
+        pi = ProformaInvoice.objects.select_related('customer').get(pk=pi_id)
+
+        # Build recipient list
+        distribution_list = self._get_distribution_list()
+        customer_email = getattr(pi.customer, 'email', None)
+
+        recipients = list(distribution_list)
+        if customer_email and customer_email.strip():
+            recipients.insert(0, customer_email.strip())
+
+        if not recipients:
+            logger.warning(
+                'PI %s: No recipients available for payment reminder email.',
+                pi.pi_number,
+            )
+            return
+
+        days_overdue = (timezone.now() - pi.updated_at).days
+
+        context = {
+            'pi_number': pi.pi_number,
+            'customer_name': pi.customer.name if pi.customer else 'Valued Customer',
+            'total_amount': pi.total_amount,
+            'currency': pi.currency,
+            'days_overdue': days_overdue,
+            'payment_terms': pi.payment_terms,
+        }
+
+        subject = f"Payment Reminder - {pi.pi_number}"
+        html_body = render_to_string(
+            'notifications/payment_reminder.html', context
+        )
+
+        try:
+            self.ses_client.send_email(
+                Source=self.from_email,
+                Destination={'ToAddresses': recipients},
+                Message={
+                    'Subject': {'Data': subject, 'Charset': 'UTF-8'},
+                    'Body': {
+                        'Html': {'Data': html_body, 'Charset': 'UTF-8'},
+                    },
+                },
+            )
+            logger.info(
+                'PI %s: Payment reminder email sent to %s.',
+                pi.pi_number,
+                recipients,
+            )
+        except ClientError as e:
+            logger.error(
+                'PI %s: Failed to send payment reminder email: %s',
+                pi.pi_number,
                 str(e),
             )
             raise

@@ -1,11 +1,326 @@
-import { Typography, Box } from '@mui/material';
+import { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import {
+  Typography,
+  Box,
+  Paper,
+  Button,
+  Divider,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemIcon,
+  Alert,
+  Chip,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  TextField,
+  CircularProgress,
+} from '@mui/material';
+import DescriptionIcon from '@mui/icons-material/Description';
+import InventoryIcon from '@mui/icons-material/Inventory';
+import SailingIcon from '@mui/icons-material/Sailing';
+import WarningIcon from '@mui/icons-material/Warning';
+import { useBLForBooking } from '@/features/bl/hooks';
+import { usePerformStuffing } from './stuffingHooks';
+import type { StuffingProduct } from './stuffingHooks';
+
+interface ContainerInfo {
+  id: number;
+  container_number: string;
+  stuffing_status: 'PENDING' | 'STUFFED';
+  stuffed_at: string | null;
+}
 
 export default function BookingDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const bookingId = id ? parseInt(id, 10) : null;
+
+  // BL query for alert banner
+  const blQuery = useBLForBooking(bookingId);
+  const bl = blQuery.data;
+  const blMissing = blQuery.isError || !bl;
+  const blPending = bl?.status === 'DRAFT' || bl?.status === 'SUBMITTED';
+
+  // Stuffing state
+  const [stuffingDialogOpen, setStuffingDialogOpen] = useState(false);
+  const [selectedContainer, setSelectedContainer] = useState<ContainerInfo | null>(null);
+  const [stuffingProducts, setStuffingProducts] = useState<StuffingProduct[]>([
+    { product_name: '', quantity: 0 },
+  ]);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+
+  const stuffingMutation = usePerformStuffing(
+    bookingId ?? 0,
+    selectedContainer?.id ?? 0
+  );
+
+  // Mock containers (in real app, these come from the booking query)
+  const containers: ContainerInfo[] = [];
+
+  function openStuffingDialog(container: ContainerInfo) {
+    setSelectedContainer(container);
+    setStuffingProducts([{ product_name: '', quantity: 0 }]);
+    setStuffingDialogOpen(true);
+  }
+
+  function handleStuffingProductChange(index: number, field: keyof StuffingProduct, value: string) {
+    setStuffingProducts((prev) => {
+      const updated = [...prev];
+      if (field === 'quantity') {
+        updated[index] = { ...updated[index], quantity: parseInt(value, 10) || 0 } as StuffingProduct;
+      } else {
+        updated[index] = { ...updated[index], [field]: value } as StuffingProduct;
+      }
+      return updated;
+    });
+  }
+
+  function addStuffingProduct() {
+    setStuffingProducts((prev) => [...prev, { product_name: '', quantity: 0 }]);
+  }
+
+  function handleConfirmStuffing() {
+    setConfirmDialogOpen(false);
+    stuffingMutation.mutate(
+      { products: stuffingProducts.filter((p) => p.product_name && p.quantity > 0) },
+      {
+        onSuccess: () => {
+          setStuffingDialogOpen(false);
+        },
+      }
+    );
+  }
+
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h4" component="h1">
+      <Typography variant="h4" component="h1" sx={{ mb: 3 }}>
         Booking Detail
       </Typography>
+
+      {/* BL Alert Banner */}
+      {blMissing && !blQuery.isLoading && (
+        <Alert severity="warning" icon={<WarningIcon />} sx={{ mb: 3 }}>
+          Bill of Lading is missing for this booking.{' '}
+          <Button
+            size="small"
+            variant="text"
+            onClick={() => navigate(`/bookings/${bookingId}/bl/new`)}
+          >
+            Create BL
+          </Button>
+        </Alert>
+      )}
+      {blPending && bl && (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          Bill of Lading ({bl.bl_number}) is in <strong>{bl.status}</strong> status.{' '}
+          <Button
+            size="small"
+            variant="text"
+            onClick={() => navigate(`/bookings/${bookingId}/bl`)}
+          >
+            View BL
+          </Button>
+        </Alert>
+      )}
+
+      {/* Documents Section */}
+      <Paper sx={{ p: 3, mt: 3 }}>
+        <Typography variant="h6" sx={{ mb: 2 }}>
+          Documents
+        </Typography>
+        <Divider sx={{ mb: 2 }} />
+        <List>
+          <ListItem
+            component="div"
+            sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' }, borderRadius: 1 }}
+            onClick={() => navigate(`/bookings/${bookingId}/commercial-invoice`)}
+          >
+            <ListItemIcon>
+              <DescriptionIcon color="primary" />
+            </ListItemIcon>
+            <ListItemText
+              primary="Commercial Invoice"
+              secondary="Generate or view the formal trade invoice for this booking"
+            />
+            <Button variant="outlined" size="small">
+              Open
+            </Button>
+          </ListItem>
+
+          <ListItem
+            component="div"
+            sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' }, borderRadius: 1 }}
+            onClick={() => navigate(`/bookings/${bookingId}/packing-list`)}
+          >
+            <ListItemIcon>
+              <InventoryIcon color="primary" />
+            </ListItemIcon>
+            <ListItemText
+              primary="Packing List"
+              secondary="Generate or view the packing list for this booking"
+            />
+            <Button variant="outlined" size="small">
+              Open
+            </Button>
+          </ListItem>
+
+          <ListItem
+            component="div"
+            sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' }, borderRadius: 1 }}
+            onClick={() => navigate(`/bookings/${bookingId}/bl`)}
+          >
+            <ListItemIcon>
+              <SailingIcon color="primary" />
+            </ListItemIcon>
+            <ListItemText
+              primary="Bill of Lading"
+              secondary="Manage the Bill of Lading for this booking"
+            />
+            <Button variant="outlined" size="small">
+              Open
+            </Button>
+          </ListItem>
+        </List>
+      </Paper>
+
+      {/* Container Stuffing Section */}
+      <Paper sx={{ p: 3, mt: 3 }}>
+        <Typography variant="h6" sx={{ mb: 2 }}>
+          Container Stuffing
+        </Typography>
+        <Divider sx={{ mb: 2 }} />
+
+        {containers.length === 0 ? (
+          <Typography variant="body2" color="text.secondary">
+            No containers available for this booking. Containers will appear once added.
+          </Typography>
+        ) : (
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 600 }}>Container #</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Stuffing Status</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Stuffed At</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }} align="center">Action</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {containers.map((container) => (
+                  <TableRow key={container.id}>
+                    <TableCell>{container.container_number}</TableCell>
+                    <TableCell>
+                      <Chip
+                        label={container.stuffing_status}
+                        size="small"
+                        color={container.stuffing_status === 'STUFFED' ? 'success' : 'default'}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      {container.stuffed_at
+                        ? new Date(container.stuffed_at).toLocaleString()
+                        : '—'}
+                    </TableCell>
+                    <TableCell align="center">
+                      <Button
+                        variant="contained"
+                        size="small"
+                        disabled={container.stuffing_status === 'STUFFED'}
+                        onClick={() => openStuffingDialog(container)}
+                      >
+                        Mark as Stuffed
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </Paper>
+
+      {/* Stuffing Dialog */}
+      <Dialog
+        open={stuffingDialogOpen}
+        onClose={() => setStuffingDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          Stuff Container: {selectedContainer?.container_number}
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Enter the product quantities to load into this container.
+          </Typography>
+          {stuffingProducts.map((product, index) => (
+            <Box key={index} sx={{ display: 'flex', gap: 2, mb: 2 }}>
+              <TextField
+                label="Product Name"
+                size="small"
+                value={product.product_name}
+                onChange={(e) => handleStuffingProductChange(index, 'product_name', e.target.value)}
+                fullWidth
+              />
+              <TextField
+                label="Quantity"
+                type="number"
+                size="small"
+                value={product.quantity || ''}
+                onChange={(e) => handleStuffingProductChange(index, 'quantity', e.target.value)}
+                sx={{ width: 120 }}
+              />
+            </Box>
+          ))}
+          <Button size="small" onClick={addStuffingProduct}>
+            + Add Product
+          </Button>
+          {stuffingMutation.isError && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              Failed to perform stuffing. Check available stock and try again.
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setStuffingDialogOpen(false)}>Cancel</Button>
+          <Button
+            variant="contained"
+            color="warning"
+            onClick={() => setConfirmDialogOpen(true)}
+            disabled={stuffingMutation.isPending || !stuffingProducts.some((p) => p.product_name && p.quantity > 0)}
+          >
+            {stuffingMutation.isPending ? <CircularProgress size={20} /> : 'Perform Stuffing'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Stuffing Confirmation Dialog */}
+      <Dialog open={confirmDialogOpen} onClose={() => setConfirmDialogOpen(false)}>
+        <DialogTitle>Confirm Stuffing Action</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            This action is irreversible. Stock will be deducted from available inventory for the
+            specified products. Are you sure you want to proceed?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmDialogOpen(false)}>Cancel</Button>
+          <Button variant="contained" color="error" onClick={handleConfirmStuffing}>
+            Confirm Stuffing
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

@@ -5,6 +5,7 @@ Views for the Dashboard app.
 from datetime import timedelta
 
 from django.db.models import Count, Exists, OuterRef, Sum
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
@@ -19,7 +20,8 @@ from invoices.models import CommercialInvoice, PackingList
 from logistics.pagination import StandardPagination
 from proforma.models import ProformaInvoice
 
-from .serializers import CurrentShipmentsSerializer, ProformaStatusSerializer
+from .models import Alert
+from .serializers import AlertSerializer, CurrentShipmentsSerializer, ProformaStatusSerializer
 
 
 class KPIView(APIView):
@@ -265,3 +267,22 @@ class AlertsView(APIView):
             'shipment_delay': shipment_delay,
             'missing_bl': missing_bl,
         })
+
+
+class AlertDismissView(APIView):
+    """
+    PATCH /api/alerts/{id}/dismiss/
+    Dismisses an alert by setting is_read=True and is_resolved=True.
+    Returns the updated alert.
+    Accessible to all authenticated users.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, pk):
+        alert = get_object_or_404(Alert, pk=pk)
+        alert.is_read = True
+        alert.is_resolved = True
+        alert.save()
+        serializer = AlertSerializer(alert)
+        return Response(serializer.data)

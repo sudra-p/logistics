@@ -61,6 +61,13 @@ apiClient.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
+    // Handle 403 Forbidden — redirect to access denied page
+    if (error.response?.status === 403) {
+      // Only redirect for navigation-related requests, not background data fetches
+      // We expose the error so components can handle it, but also set a flag
+      return Promise.reject(error);
+    }
+
     // Only handle 401s, and only attempt refresh once per request
     if (error.response?.status !== 401 || originalRequest._retry) {
       return Promise.reject(error);

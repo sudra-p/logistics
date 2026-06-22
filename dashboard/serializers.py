@@ -5,7 +5,30 @@ Serializers for the Dashboard app.
 from rest_framework import serializers
 
 from bookings.models import Booking, Container
+from dashboard.models import Alert
 from proforma.models import ProformaInvoice
+
+
+class AlertSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Alert model.
+    Returns all alert fields including read/resolved status.
+    """
+
+    class Meta:
+        model = Alert
+        fields = [
+            'id',
+            'alert_type',
+            'message',
+            'related_object_id',
+            'related_object_type',
+            'is_read',
+            'is_resolved',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = fields
 
 
 class ProformaStatusSerializer(serializers.ModelSerializer):

@@ -6,8 +6,9 @@ from django.db.models import Prefetch
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.generics import ListAPIView
+from rest_framework.permissions import IsAuthenticated
 
-from accounts.permissions import IsAdminUser, IsOperationsUser
+from accounts.permissions import CanManageInventory
 from bookings.models import Booking, Container
 from logistics.pagination import StandardPagination
 
@@ -62,7 +63,7 @@ class OperationsTrackingView(ListAPIView):
     """
 
     serializer_class = OperationsTrackingSerializer
-    permission_classes = [IsOperationsUser | IsAdminUser]
+    permission_classes = [IsAuthenticated, CanManageInventory]
     pagination_class = StandardPagination
     filterset_class = OperationsTrackingFilterSet
     filter_backends = [DjangoFilterBackend, SearchFilter, OperationsTrackingOrderingFilter]

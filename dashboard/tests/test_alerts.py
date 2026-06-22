@@ -286,3 +286,108 @@ class TestAlertsEndpoint:
         assert len(data['payment_overdue']) == 1
         assert len(data['shipment_delay']) == 1
         assert len(data['missing_bl']) == 1
+
+
+from dashboard.models import Alert
+
+DISMISS_URL = '/api/alerts/{id}/dismiss/'
+
+
+class TestAlertDismissEndpoint:
+    """Tests for PATCH /api/alerts/{id}/dismiss/"""
+
+    def test_unauthenticated_returns_401(self, db):
+        alert = Alert.objects.create(
+            alert_type=Alert.AlertType.MISSING_BL,
+            message='Test alert',
+        )
+        client = APIClient()
+        response = client.patch(DISMISS_URL.format(id=alert.pk))
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_dismiss_sets_is_read_and_is_resolved(self, authenticated_client):
+        client, user = authenticated_client
+        alert = Alert.objects.create(
+            alert_type=Alert.AlertType.MISSING_BL,
+            message='Missing BL for booking',
+            is_read=False,
+            is_resolved=False,
+        )
+
+        response = client.patch(DISMISS_URL.format(id=alert.pk))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data['is_read'] is True
+        assert data['is_resolved'] is True
+
+        # Verify database state
+        alert.refresh_from_db()
+        assert alert.is_read is True
+        assert alert.is_resolved is True
+
+    def test_dismiss_returns_full_alert_data(self, authenticated_client):
+        client, user = authenticated_client
+        alert = Alert.objects.create(
+            alert_type=Alert.AlertType.PAYMENT_OVERDUE,
+            message='Payment overdue for PI-202601-0001',
+            related_object_id=42,
+            related_object_type='ProformaInvoice',
+            is_read=False,
+            is_resolved=False,
+        )
+
+        response = client.patch(DISMISS_URL.format(id=alert.pk))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data['id'] == alert.pk
+        assert data['alert_type'] == 'PAYMENT_OVERDUE'
+        assert data['message'] == 'Payment overdue for PI-202601-0001'
+        assert data['related_object_id'] == 42
+        assert data['related_object_type'] == 'ProformaInvoice'
+        assert data['is_read'] is True
+        assert data['is_resolved'] is True
+        assert 'created_at' in data
+        assert 'updated_at' in data
+
+    def test_dismiss_nonexistent_alert_returns_404(self, authenticated_client):
+        client, user = authenticated_client
+        response = client.patch(DISMISS_URL.format(id=99999))
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_dismiss_already_dismissed_alert_is_idempotent(self, authenticated_client):
+        client, user = authenticated_client
+        alert = Alert.objects.create(
+            alert_type=Alert.AlertType.SHIPMENT_DELAY,
+            message='Shipment delayed',
+            is_read=True,
+            is_resolved=True,
+        )
+
+        response = client.patch(DISMISS_URL.format(id=alert.pk))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data['is_read'] is True
+        assert data['is_resolved'] is True
+
+    def test_dismiss_only_affects_target_alert(self, authenticated_client):
+        client, user = authenticated_client
+        alert1 = Alert.objects.create(
+            alert_type=Alert.AlertType.MISSING_BL,
+            message='Alert 1',
+            is_read=False,
+            is_resolved=False,
+        )
+        alert2 = Alert.objects.create(
+            alert_type=Alert.AlertType.PENDING_BL,
+            message='Alert 2',
+            is_read=False,
+            is_resolved=False,
+        )
+
+        response = client.patch(DISMISS_URL.format(id=alert1.pk))
+        assert response.status_code == status.HTTP_200_OK
+
+        # alert2 should remain unaffected
+        alert2.refresh_from_db()
+        assert alert2.is_read is False
+        assert alert2.is_resolved is False

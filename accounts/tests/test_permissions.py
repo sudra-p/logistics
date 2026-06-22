@@ -4,9 +4,16 @@ from django.contrib.auth.models import Group
 from django.test import RequestFactory
 
 from accounts.permissions import (
+    CanManageBL,
+    CanManageDocuments,
+    CanManageInventory,
     CanManageMasterData,
+    CanManagePayments,
+    CanManageProforma,
     CanModifyBooking,
+    CanPerformStuffing,
     CanViewBooking,
+    CanViewProforma,
     IsAccountsUser,
     IsAdminUser,
     IsOperationsUser,
@@ -172,3 +179,192 @@ class TestCanManageMasterData:
         request = request_factory.post('/')
         request.user = accounts_user
         assert CanManageMasterData().has_permission(request, None) is False
+
+
+class TestCanManageProforma:
+    def test_grants_access_to_accounts_user(self, request_factory, accounts_user):
+        request = request_factory.post('/')
+        request.user = accounts_user
+        assert CanManageProforma().has_permission(request, None) is True
+
+    def test_grants_access_to_admin_user(self, request_factory, admin_user):
+        request = request_factory.post('/')
+        request.user = admin_user
+        assert CanManageProforma().has_permission(request, None) is True
+
+    def test_denies_access_to_operations_user(self, request_factory, operations_user):
+        request = request_factory.post('/')
+        request.user = operations_user
+        assert CanManageProforma().has_permission(request, None) is False
+
+    def test_denies_access_to_sales_user(self, request_factory, sales_user):
+        request = request_factory.post('/')
+        request.user = sales_user
+        assert CanManageProforma().has_permission(request, None) is False
+
+    def test_denies_access_to_unauthenticated(self, request_factory, unauthenticated_user):
+        request = request_factory.post('/')
+        request.user = unauthenticated_user
+        assert CanManageProforma().has_permission(request, None) is False
+
+
+class TestCanViewProforma:
+    def test_grants_access_to_accounts_user(self, request_factory, accounts_user):
+        request = request_factory.get('/')
+        request.user = accounts_user
+        assert CanViewProforma().has_permission(request, None) is True
+
+    def test_grants_access_to_admin_user(self, request_factory, admin_user):
+        request = request_factory.get('/')
+        request.user = admin_user
+        assert CanViewProforma().has_permission(request, None) is True
+
+    def test_grants_access_to_sales_user(self, request_factory, sales_user):
+        request = request_factory.get('/')
+        request.user = sales_user
+        assert CanViewProforma().has_permission(request, None) is True
+
+    def test_denies_access_to_operations_user(self, request_factory, operations_user):
+        request = request_factory.get('/')
+        request.user = operations_user
+        assert CanViewProforma().has_permission(request, None) is False
+
+    def test_denies_access_to_unauthenticated(self, request_factory, unauthenticated_user):
+        request = request_factory.get('/')
+        request.user = unauthenticated_user
+        assert CanViewProforma().has_permission(request, None) is False
+
+
+class TestCanManagePayments:
+    def test_grants_access_to_accounts_user(self, request_factory, accounts_user):
+        request = request_factory.post('/')
+        request.user = accounts_user
+        assert CanManagePayments().has_permission(request, None) is True
+
+    def test_grants_access_to_admin_user(self, request_factory, admin_user):
+        request = request_factory.post('/')
+        request.user = admin_user
+        assert CanManagePayments().has_permission(request, None) is True
+
+    def test_denies_access_to_operations_user(self, request_factory, operations_user):
+        request = request_factory.post('/')
+        request.user = operations_user
+        assert CanManagePayments().has_permission(request, None) is False
+
+    def test_denies_access_to_sales_user(self, request_factory, sales_user):
+        request = request_factory.post('/')
+        request.user = sales_user
+        assert CanManagePayments().has_permission(request, None) is False
+
+    def test_denies_access_to_unauthenticated(self, request_factory, unauthenticated_user):
+        request = request_factory.post('/')
+        request.user = unauthenticated_user
+        assert CanManagePayments().has_permission(request, None) is False
+
+
+class TestCanManageInventory:
+    def test_grants_access_to_operations_user(self, request_factory, operations_user):
+        request = request_factory.post('/')
+        request.user = operations_user
+        assert CanManageInventory().has_permission(request, None) is True
+
+    def test_grants_access_to_admin_user(self, request_factory, admin_user):
+        request = request_factory.post('/')
+        request.user = admin_user
+        assert CanManageInventory().has_permission(request, None) is True
+
+    def test_denies_access_to_accounts_user(self, request_factory, accounts_user):
+        request = request_factory.post('/')
+        request.user = accounts_user
+        assert CanManageInventory().has_permission(request, None) is False
+
+    def test_denies_access_to_sales_user(self, request_factory, sales_user):
+        request = request_factory.post('/')
+        request.user = sales_user
+        assert CanManageInventory().has_permission(request, None) is False
+
+    def test_denies_access_to_unauthenticated(self, request_factory, unauthenticated_user):
+        request = request_factory.post('/')
+        request.user = unauthenticated_user
+        assert CanManageInventory().has_permission(request, None) is False
+
+
+class TestCanPerformStuffing:
+    def test_grants_access_to_operations_user(self, request_factory, operations_user):
+        request = request_factory.post('/')
+        request.user = operations_user
+        assert CanPerformStuffing().has_permission(request, None) is True
+
+    def test_grants_access_to_admin_user(self, request_factory, admin_user):
+        request = request_factory.post('/')
+        request.user = admin_user
+        assert CanPerformStuffing().has_permission(request, None) is True
+
+    def test_denies_access_to_accounts_user(self, request_factory, accounts_user):
+        request = request_factory.post('/')
+        request.user = accounts_user
+        assert CanPerformStuffing().has_permission(request, None) is False
+
+    def test_denies_access_to_sales_user(self, request_factory, sales_user):
+        request = request_factory.post('/')
+        request.user = sales_user
+        assert CanPerformStuffing().has_permission(request, None) is False
+
+    def test_denies_access_to_unauthenticated(self, request_factory, unauthenticated_user):
+        request = request_factory.post('/')
+        request.user = unauthenticated_user
+        assert CanPerformStuffing().has_permission(request, None) is False
+
+
+class TestCanManageDocuments:
+    def test_grants_access_to_accounts_user(self, request_factory, accounts_user):
+        request = request_factory.post('/')
+        request.user = accounts_user
+        assert CanManageDocuments().has_permission(request, None) is True
+
+    def test_grants_access_to_operations_user(self, request_factory, operations_user):
+        request = request_factory.post('/')
+        request.user = operations_user
+        assert CanManageDocuments().has_permission(request, None) is True
+
+    def test_grants_access_to_admin_user(self, request_factory, admin_user):
+        request = request_factory.post('/')
+        request.user = admin_user
+        assert CanManageDocuments().has_permission(request, None) is True
+
+    def test_denies_access_to_sales_user(self, request_factory, sales_user):
+        request = request_factory.post('/')
+        request.user = sales_user
+        assert CanManageDocuments().has_permission(request, None) is False
+
+    def test_denies_access_to_unauthenticated(self, request_factory, unauthenticated_user):
+        request = request_factory.post('/')
+        request.user = unauthenticated_user
+        assert CanManageDocuments().has_permission(request, None) is False
+
+
+class TestCanManageBL:
+    def test_grants_access_to_operations_user(self, request_factory, operations_user):
+        request = request_factory.post('/')
+        request.user = operations_user
+        assert CanManageBL().has_permission(request, None) is True
+
+    def test_grants_access_to_admin_user(self, request_factory, admin_user):
+        request = request_factory.post('/')
+        request.user = admin_user
+        assert CanManageBL().has_permission(request, None) is True
+
+    def test_denies_access_to_accounts_user(self, request_factory, accounts_user):
+        request = request_factory.post('/')
+        request.user = accounts_user
+        assert CanManageBL().has_permission(request, None) is False
+
+    def test_denies_access_to_sales_user(self, request_factory, sales_user):
+        request = request_factory.post('/')
+        request.user = sales_user
+        assert CanManageBL().has_permission(request, None) is False
+
+    def test_denies_access_to_unauthenticated(self, request_factory, unauthenticated_user):
+        request = request_factory.post('/')
+        request.user = unauthenticated_user
+        assert CanManageBL().has_permission(request, None) is False

@@ -7,7 +7,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from accounts.permissions import IsAccountsUser, IsAdminUser, IsOperationsUser
+from accounts.permissions import CanManageDocuments
 
 from .models import CommercialInvoice, PackingList
 from .serializers import (
@@ -37,10 +37,7 @@ class CommercialInvoiceViewSet(viewsets.ViewSet):
 
     def get_permissions(self):
         if self.action in ('create', 'update', 'partial_update', 'finalize', 'revise'):
-            return [
-                IsAuthenticated(),
-                IsAccountsUser() | IsOperationsUser() | IsAdminUser(),
-            ]
+            return [IsAuthenticated(), CanManageDocuments()]
         return [IsAuthenticated()]
 
 
@@ -54,10 +51,7 @@ class BookingCommercialInvoiceView(viewsets.ViewSet):
 
     def get_permissions(self):
         if self.action == 'create':
-            return [
-                IsAuthenticated(),
-                IsAccountsUser() | IsOperationsUser() | IsAdminUser(),
-            ]
+            return [IsAuthenticated(), CanManageDocuments()]
         return [IsAuthenticated()]
 
     def create(self, request, booking_id=None):
@@ -100,10 +94,7 @@ class CommercialInvoiceDetailView(viewsets.ViewSet):
 
     def get_permissions(self):
         if self.action in ('partial_update', 'finalize', 'revise'):
-            return [
-                IsAuthenticated(),
-                IsAccountsUser() | IsOperationsUser() | IsAdminUser(),
-            ]
+            return [IsAuthenticated(), CanManageDocuments()]
         return [IsAuthenticated()]
 
     def retrieve(self, request, pk=None):
@@ -166,10 +157,7 @@ class BookingPackingListView(viewsets.ViewSet):
 
     def get_permissions(self):
         if self.action == 'create':
-            return [
-                IsAuthenticated(),
-                IsAccountsUser() | IsOperationsUser() | IsAdminUser(),
-            ]
+            return [IsAuthenticated(), CanManageDocuments()]
         return [IsAuthenticated()]
 
     def create(self, request, booking_id=None):
@@ -212,10 +200,7 @@ class PackingListDetailView(viewsets.ViewSet):
 
     def get_permissions(self):
         if self.action in ('partial_update', 'finalize', 'revise'):
-            return [
-                IsAuthenticated(),
-                IsAccountsUser() | IsOperationsUser() | IsAdminUser(),
-            ]
+            return [IsAuthenticated(), CanManageDocuments()]
         return [IsAuthenticated()]
 
     def retrieve(self, request, pk=None):

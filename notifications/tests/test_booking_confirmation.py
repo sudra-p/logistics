@@ -535,3 +535,214 @@ class TestBookingCreationTriggersEmail(TestCase):
 
         # Verify task was queued with booking ID
         mock_delay.assert_called_once_with(booking.id)
+
+
+@pytest.mark.django_db
+class TestBookingConfirmationWithProformaInvoice(TestCase):
+    """Tests for PI data inclusion in booking confirmation emails."""
+
+    def setUp(self):
+        """Set up test data including a Proforma Invoice linked to a Booking."""
+        self.user = User.objects.create_user(
+            username='testops_pi', password='testpass123'
+        )
+        self.client_entity = Client.objects.create(
+            name='PI Test Client', email='piclient@example.com'
+        )
+        self.shipping_line = ShippingLine.objects.create(
+            name='Evergreen', code='EGLV'
+        )
+        self.pol = Port.objects.create(name='Mundra', code='INMUN2', country='India')
+        self.pod = Port.objects.create(name='Felixstowe', code='GBFXT', country='UK')
+        self.commodity = Commodity.objects.create(name='Spices', hs_code='0904')
+        self.container_type = ContainerType.objects.create(name='Reefer', code='REF')
+
+        # Create a Proforma Invoice
+        from proforma.models import ProformaInvoice, ProformaLineItem
+        from decimal import Decimal
+
+        self.proforma_invoice = ProformaInvoice.objects.create(
+            date=date.today(),
+            customer=self.client_entity,
+            currency='USD',
+            exchange_rate=Decimal('83.5000'),
+            payment_terms='Net 30',
+            expected_shipment_date=date.today() + timedelta(days=30),
+            total_amount=Decimal('15000.00'),
+            status=ProformaInvoice.Status.PAID,
+            created_by=self.user,
+        )
+        ProformaLineItem.objects.create(
+            proforma_invoice=self.proforma_invoice,
+            product_name='Black Pepper',
+            quantity=Decimal('500.000'),
+            rate=Decimal('30.00'),
+            amount=Decimal('15000.00'),
+        )
+
+        # Create a Booking linked to the PI
+        self.booking = Booking.objects.create(
+            booking_no='BK-PI-001',
+            booking_date=date.today(),
+            booking_validity_date=date.today() + timedelta(days=30),
+            forwarding_window_start=date.today(),
+            forwarding_window_end=date.today() + timedelta(days=14),
+            shipping_line=self.shipping_line,
+            pol=self.pol,
+            pod=self.pod,
+            client=self.client_entity,
+            commodity=self.commodity,
+            cargo_type=Booking.CargoType.FCL,
+            shipment_type='Export',
+            stuffing_type='Factory',
+            proforma_invoice=self.proforma_invoice,
+            created_by=self.user,
+        )
+
+        Container.objects.create(
+            booking=self.booking,
+            container_type=self.container_type,
+            container_size='20FT',
+            container_count=1,
+        )
+
+    @override_settings(
+        DISTRIBUTION_LIST=['ops@company.com'],
+        AWS_SES_FROM_EMAIL='noreply@logistics.example.com',
+        AWS_SES_REGION='ap-south-1',
+        AWS_ACCESS_KEY_ID='test-key',
+        AWS_SECRET_ACCESS_KEY='test-secret',
+    )
+    @patch('notifications.services.boto3.client')
+    def test_booking_confirmation_includes_pi_data(self, mock_boto_client):
+        """Test that booking confirmation includes PI Number, Customer Name, and Total Amount when PI is linked."""
+        mock_ses = MagicMock()
+        mock_boto_client.return_value = mock_ses
+
+        service = EmailNotificationService()
+        service.send_booking_confirmation(self.booking.id)
+
+        # Verify SES was called
+        mock_ses.send_email.assert_called_once()
+        call_kwargs = mock_ses.send_email.call_args[1]
+        html_body = call_kwargs['Message']['Body']['Html']['Data']
+
+        # PI data should be in the email body
+        assert self.proforma_invoice.pi_number in html_body
+        assert 'PI Test Client' in html_body
+        assert '15000.00' in html_body
+        assert 'USD' in html_body
+
+    @override_settings(
+        DISTRIBUTION_LIST=['ops@company.com'],
+        AWS_SES_FROM_EMAIL='noreply@logistics.example.com',
+        AWS_SES_REGION='ap-south-1',
+        AWS_ACCESS_KEY_ID='test-key',
+        AWS_SECRET_ACCESS_KEY='test-secret',
+    )
+    @patch('notifications.services.boto3.client')
+    def test_booking_confirmation_without_pi_no_pi_data(self, mock_boto_client):
+        """Test that booking confirmation does NOT include PI fields when no PI is linked."""
+        mock_ses = MagicMock()
+        mock_boto_client.return_value = mock_ses
+
+        # Create a booking without a PI link
+        booking_no_pi = Booking.objects.create(
+            booking_no='BK-NOPI-001',
+            booking_date=date.today(),
+            booking_validity_date=date.today() + timedelta(days=30),
+            forwarding_window_start=date.today(),
+            forwarding_window_end=date.today() + timedelta(days=14),
+            shipping_line=self.shipping_line,
+            pol=self.pol,
+            pod=self.pod,
+            client=self.client_entity,
+            commodity=self.commodity,
+            cargo_type=Booking.CargoType.FCL,
+            shipment_type='Export',
+            stuffing_type='Factory',
+            created_by=self.user,
+        )
+
+        service = EmailNotificationService()
+        service.send_booking_confirmation(booking_no_pi.id)
+
+        # Verify SES was called
+        mock_ses.send_email.assert_called_once()
+        call_kwargs = mock_ses.send_email.call_args[1]
+        html_body = call_kwargs['Message']['Body']['Html']['Data']
+
+        # PI-specific section should not render
+        assert 'PI Number' not in html_body or 'Proforma Invoice' not in html_body
+
+    @override_settings(
+        DISTRIBUTION_LIST=['ops@company.com'],
+        AWS_SES_FROM_EMAIL='noreply@logistics.example.com',
+        AWS_SES_REGION='ap-south-1',
+        AWS_ACCESS_KEY_ID='test-key',
+        AWS_SECRET_ACCESS_KEY='test-secret',
+    )
+    @patch('notifications.services.boto3.client')
+    def test_booking_confirmation_pi_context_values(self, mock_boto_client):
+        """Test that the correct PI context values are passed to the template."""
+        mock_ses = MagicMock()
+        mock_boto_client.return_value = mock_ses
+
+        # Patch render_to_string to capture context
+        with patch('notifications.services.render_to_string') as mock_render:
+            mock_render.return_value = '<html>test</html>'
+
+            service = EmailNotificationService()
+            service.send_booking_confirmation(self.booking.id)
+
+            # Verify render_to_string was called with the PI context
+            mock_render.assert_called_once()
+            template_name, context = mock_render.call_args[0]
+            assert template_name == 'notifications/booking_confirmation.html'
+            assert context['pi_number'] == self.proforma_invoice.pi_number
+            assert context['pi_customer_name'] == 'PI Test Client'
+            assert context['pi_total_amount'] == '15000.00 USD'
+
+    @override_settings(
+        DISTRIBUTION_LIST=['ops@company.com'],
+        AWS_SES_FROM_EMAIL='noreply@logistics.example.com',
+        AWS_SES_REGION='ap-south-1',
+        AWS_ACCESS_KEY_ID='test-key',
+        AWS_SECRET_ACCESS_KEY='test-secret',
+    )
+    @patch('notifications.services.boto3.client')
+    def test_booking_confirmation_no_pi_context_when_unlinked(self, mock_boto_client):
+        """Test that PI context keys are absent when no PI is linked."""
+        mock_ses = MagicMock()
+        mock_boto_client.return_value = mock_ses
+
+        # Create a booking without PI
+        booking_no_pi = Booking.objects.create(
+            booking_no='BK-NOPI-002',
+            booking_date=date.today(),
+            booking_validity_date=date.today() + timedelta(days=30),
+            forwarding_window_start=date.today(),
+            forwarding_window_end=date.today() + timedelta(days=14),
+            shipping_line=self.shipping_line,
+            pol=self.pol,
+            pod=self.pod,
+            client=self.client_entity,
+            commodity=self.commodity,
+            cargo_type=Booking.CargoType.FCL,
+            shipment_type='Export',
+            stuffing_type='Factory',
+            created_by=self.user,
+        )
+
+        with patch('notifications.services.render_to_string') as mock_render:
+            mock_render.return_value = '<html>test</html>'
+
+            service = EmailNotificationService()
+            service.send_booking_confirmation(booking_no_pi.id)
+
+            # Verify render_to_string was called WITHOUT PI context keys
+            mock_render.assert_called_once()
+            _, context = mock_render.call_args[0]
+            assert 'pi_number' not in context
+            assert 'pi_customer_name' not in context
+            assert 'pi_total_amount' not in context
