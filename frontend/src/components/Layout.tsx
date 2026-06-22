@@ -155,30 +155,33 @@ export function Layout({ children }: LayoutProps) {
       </aside>
 
       {/* Header */}
-      <header className="fixed top-0 right-0 left-0 lg:left-60 z-30 h-16 bg-surface border-b border-outline flex items-center px-4 gap-4">
-        {/* Mobile menu toggle */}
-        <button
-          className="lg:hidden p-2 rounded-lg hover:bg-surface-variant text-on-surface-variant"
-          onClick={() => { setSidebarOpen(true); }}
-          aria-label="Open navigation menu"
-        >
-          <span className="material-symbols-outlined">menu</span>
-        </button>
+      <header className="fixed top-0 right-0 left-0 lg:left-60 z-30 h-16 bg-surface border-b border-outline flex items-center justify-between px-4 gap-4">
+        {/* Left: Mobile menu + Search */}
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          {/* Mobile menu toggle */}
+          <button
+            className="lg:hidden p-2 rounded-lg hover:bg-surface-variant text-on-surface-variant flex-shrink-0"
+            onClick={() => { setSidebarOpen(true); }}
+            aria-label="Open navigation menu"
+          >
+            <span className="material-symbols-outlined">menu</span>
+          </button>
 
-        {/* Search input */}
-        <div className="flex-1 max-w-xl relative">
-          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">
-            search
-          </span>
-          <input
-            type="text"
-            placeholder="Search bookings, clients, job numbers..."
-            className="w-full pl-10 pr-4 py-2 rounded-full bg-surface-variant border border-outline-variant text-body-md text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
-          />
+          {/* Search input */}
+          <div className="flex-1 max-w-md relative">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">
+              search
+            </span>
+            <input
+              type="text"
+              placeholder="Search bookings, clients, job numbers..."
+              className="w-full pl-10 pr-4 py-2 rounded-full bg-surface-variant border border-outline-variant text-body-md text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+            />
+          </div>
         </div>
 
         {/* Right side icons + user */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           {/* Notification icon */}
           <button className="p-2 rounded-lg hover:bg-surface-variant text-on-surface-variant relative">
             <span className="material-symbols-outlined text-[22px]">notifications</span>
