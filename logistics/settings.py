@@ -20,6 +20,7 @@ ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').sp
 # Application definition
 
 INSTALLED_APPS = [
+    'unfold',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -75,6 +76,13 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'logistics.wsgi.application'
+
+# Unfold Admin Theme
+UNFOLD = {
+    "SITE_TITLE": "Logistics ERP",
+    "SITE_HEADER": "Logistics ERP Admin",
+    "SITE_SYMBOL": "conveyor_belt",
+}
 
 
 # Database
