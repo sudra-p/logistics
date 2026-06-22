@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Typography,
@@ -35,6 +35,7 @@ import InventoryIcon from '@mui/icons-material/Inventory';
 import SailingIcon from '@mui/icons-material/Sailing';
 import WarningIcon from '@mui/icons-material/Warning';
 import DeleteIcon from '@mui/icons-material/Delete';
+import AddIcon from '@mui/icons-material/Add';
 import { useBLForBooking } from '@/features/bl/hooks';
 import { usePerformStuffing } from './stuffingHooks';
 import { useMutation } from '@tanstack/react-query';
@@ -79,8 +80,7 @@ export default function BookingDetailPage() {
     selectedContainer?.id ?? 0
   );
 
-  // Mock containers (in real app, these come from the booking query)
-  const containers: ContainerInfo[] = [];
+  // Mock containers replaced by real data from API above
 
   function openStuffingDialog(container: ContainerInfo) {
     setSelectedContainer(container);
@@ -112,6 +112,46 @@ export default function BookingDetailPage() {
     onSuccess: () => {
       setNewStatus('');
       window.location.reload();
+    },
+  });
+
+  // Containers
+  const [containersList, setContainersList] = useState<ContainerInfo[]>([]);
+  const [showAddContainer, setShowAddContainer] = useState(false);
+  const [newContainerNo, setNewContainerNo] = useState('');
+  const [newSealNo, setNewSealNo] = useState('');
+  const [newContainerSize, setNewContainerSize] = useState('20FT');
+
+  // Fetch containers
+  useEffect(() => {
+    if (bookingId) {
+      apiClient.get(`bookings/${bookingId}/containers/`).then((res) => {
+        const data = res.data?.results ?? res.data ?? [];
+        setContainersList(data);
+      }).catch(() => {});
+    }
+  }, [bookingId]);
+
+  const addContainerMutation = useMutation({
+    mutationFn: () =>
+      apiClient.post(`bookings/${bookingId}/containers/`, {
+        containers: [{
+          container_type: 1,
+          container_size: newContainerSize,
+          container_count: 1,
+          container_no: newContainerNo,
+          seal_no: newSealNo,
+        }],
+      }),
+    onSuccess: () => {
+      setNewContainerNo('');
+      setNewSealNo('');
+      setShowAddContainer(false);
+      // Refresh containers
+      apiClient.get(`bookings/${bookingId}/containers/`).then((res) => {
+        const data = res.data?.results ?? res.data ?? [];
+        setContainersList(data);
+      }).catch(() => {});
     },
   });
 
@@ -272,14 +312,72 @@ export default function BookingDetailPage() {
 
       {/* Container Stuffing Section */}
       <Paper sx={{ p: 3, mt: 3 }}>
-        <Typography variant="h6" sx={{ mb: 2 }}>
-          Container Stuffing
-        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h6">
+            Containers
+          </Typography>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<AddIcon />}
+            onClick={() => setShowAddContainer(!showAddContainer)}
+          >
+            Add Container
+          </Button>
+        </Box>
         <Divider sx={{ mb: 2 }} />
 
-        {containers.length === 0 ? (
+        {showAddContainer && (
+          <Box sx={{ mb: 3, p: 2, bgcolor: 'action.hover', borderRadius: 1 }}>
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>New Container</Typography>
+            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+              <TextField
+                size="small"
+                label="Container No"
+                value={newContainerNo}
+                onChange={(e) => setNewContainerNo(e.target.value)}
+                placeholder="e.g. MSCU1234567"
+              />
+              <TextField
+                size="small"
+                label="Seal No"
+                value={newSealNo}
+                onChange={(e) => setNewSealNo(e.target.value)}
+                placeholder="e.g. SL123"
+              />
+              <FormControl size="small" sx={{ minWidth: 120 }}>
+                <InputLabel>Size</InputLabel>
+                <Select
+                  value={newContainerSize}
+                  label="Size"
+                  onChange={(e) => setNewContainerSize(e.target.value)}
+                >
+                  <MenuItem value="20FT">20FT</MenuItem>
+                  <MenuItem value="40FT">40FT</MenuItem>
+                  <MenuItem value="40FT_HC">40FT HC</MenuItem>
+                  <MenuItem value="45FT">45FT</MenuItem>
+                </Select>
+              </FormControl>
+              <Button
+                variant="contained"
+                size="small"
+                onClick={() => addContainerMutation.mutate()}
+                disabled={addContainerMutation.isPending}
+              >
+                {addContainerMutation.isPending ? <CircularProgress size={18} /> : 'Add'}
+              </Button>
+            </Box>
+            {addContainerMutation.isError && (
+              <Alert severity="error" sx={{ mt: 1 }}>
+                Failed to add container. Make sure container type exists in master data.
+              </Alert>
+            )}
+          </Box>
+        )}
+
+        {containersList.length === 0 ? (
           <Typography variant="body2" color="text.secondary">
-            No containers available for this booking. Containers will appear once added.
+            No containers added yet. Click "Add Container" above to add one.
           </Typography>
         ) : (
           <TableContainer>
@@ -287,15 +385,19 @@ export default function BookingDetailPage() {
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 600 }}>Container #</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Size</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Seal #</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Stuffing Status</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Stuffed At</TableCell>
                   <TableCell sx={{ fontWeight: 600 }} align="center">Action</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {containers.map((container) => (
+                {containersList.map((container) => (
                   <TableRow key={container.id}>
-                    <TableCell>{container.container_number}</TableCell>
+                    <TableCell>{container.container_number || '—'}</TableCell>
+                    <TableCell>{(container as unknown as Record<string, string>).container_size || '—'}</TableCell>
+                    <TableCell>{(container as unknown as Record<string, string>).seal_no || '—'}</TableCell>
                     <TableCell>
                       <Chip
                         label={container.stuffing_status}
