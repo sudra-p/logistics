@@ -46,6 +46,7 @@ export default function BLFormPage() {
   const [formError, setFormError] = useState('');
   const [shippers, setShippers] = useState<ShipperOption[]>([]);
   const [consignees, setConsignees] = useState<ConsigneeOption[]>([]);
+  const [vessels, setVessels] = useState<{ id: number; name: string }[]>([]);
 
   // Fetch existing BL
   const blQuery = useBLForBooking(bookingId);
@@ -56,7 +57,7 @@ export default function BLFormPage() {
   const createMutation = useCreateBL(bookingId ?? 0);
   const updateMutation = useUpdateBL(existingBL?.id ?? 0);
 
-  // Load master data (shippers and consignees)
+  // Load master data (shippers, consignees, vessels)
   useEffect(() => {
     apiClient.get('master-data/shippers/').then((res) => {
       const data = res.data?.results ?? res.data ?? [];
@@ -65,6 +66,10 @@ export default function BLFormPage() {
     apiClient.get('master-data/consignees/').then((res) => {
       const data = res.data?.results ?? res.data ?? [];
       setConsignees(data);
+    }).catch(() => {});
+    apiClient.get('master-data/vessels/').then((res) => {
+      const data = res.data?.results ?? res.data ?? [];
+      setVessels(data);
     }).catch(() => {});
   }, []);
 
@@ -201,12 +206,21 @@ export default function BLFormPage() {
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                label="Vessel Name"
-                value={vesselName}
-                onChange={(e) => setVesselName(e.target.value)}
-                fullWidth
-              />
+              <FormControl fullWidth>
+                <InputLabel>Vessel Name</InputLabel>
+                <Select
+                  value={vesselName}
+                  label="Vessel Name"
+                  onChange={(e) => setVesselName(e.target.value as string)}
+                >
+                  {vessels.map((v) => (
+                    <MenuItem key={v.id} value={v.name}>{v.name}</MenuItem>
+                  ))}
+                  {vesselName && !vessels.some((v) => v.name === vesselName) && (
+                    <MenuItem value={vesselName}>{vesselName}</MenuItem>
+                  )}
+                </Select>
+              </FormControl>
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
