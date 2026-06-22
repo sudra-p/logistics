@@ -121,8 +121,10 @@ export default function BookingDetailPage() {
   const [newContainerNo, setNewContainerNo] = useState('');
   const [newSealNo, setNewSealNo] = useState('');
   const [newContainerSize, setNewContainerSize] = useState('20FT');
+  const [newContainerType, setNewContainerType] = useState<number | ''>('');
+  const [containerTypes, setContainerTypes] = useState<{ id: number; name: string }[]>([]);
 
-  // Fetch containers
+  // Fetch containers and container types
   useEffect(() => {
     if (bookingId) {
       apiClient.get(`bookings/${bookingId}/containers/`).then((res) => {
@@ -130,13 +132,18 @@ export default function BookingDetailPage() {
         setContainersList(data);
       }).catch(() => {});
     }
+    apiClient.get('master-data/container-types/').then((res) => {
+      const data = res.data?.results ?? res.data ?? [];
+      setContainerTypes(data);
+      if (data.length > 0) setNewContainerType(data[0].id);
+    }).catch(() => {});
   }, [bookingId]);
 
   const addContainerMutation = useMutation({
     mutationFn: () =>
       apiClient.post(`bookings/${bookingId}/containers/`, {
         containers: [{
-          container_type: 1,
+          container_type: newContainerType,
           container_size: newContainerSize,
           container_count: 1,
           container_no: newContainerNo,
@@ -345,6 +352,18 @@ export default function BookingDetailPage() {
                 onChange={(e) => setNewSealNo(e.target.value)}
                 placeholder="e.g. SL123"
               />
+              <FormControl size="small" sx={{ minWidth: 150 }}>
+                <InputLabel>Container Type</InputLabel>
+                <Select
+                  value={newContainerType}
+                  label="Container Type"
+                  onChange={(e) => setNewContainerType(e.target.value as number)}
+                >
+                  {containerTypes.map((ct) => (
+                    <MenuItem key={ct.id} value={ct.id}>{ct.name}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
               <FormControl size="small" sx={{ minWidth: 120 }}>
                 <InputLabel>Size</InputLabel>
                 <Select
@@ -362,14 +381,14 @@ export default function BookingDetailPage() {
                 variant="contained"
                 size="small"
                 onClick={() => addContainerMutation.mutate()}
-                disabled={addContainerMutation.isPending}
+                disabled={addContainerMutation.isPending || !newContainerType}
               >
                 {addContainerMutation.isPending ? <CircularProgress size={18} /> : 'Add'}
               </Button>
             </Box>
             {addContainerMutation.isError && (
               <Alert severity="error" sx={{ mt: 1 }}>
-                Failed to add container. Make sure container type exists in master data.
+                Failed to add container. Ensure container type exists in Master Data.
               </Alert>
             )}
           </Box>
