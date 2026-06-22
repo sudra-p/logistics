@@ -115,12 +115,18 @@ export default function SearchPage() {
     setFilters((prev) => ({ ...prev, page_size: newPageSize, page: 1 }));
   };
 
-  const handleRowClick = (bookingId: number) => {
+  const getBookingUrl = (bookingId: number) => {
     if (isAccountsRole) {
-      navigate(`/bookings/${String(bookingId)}`);
-    } else {
-      navigate(`/bookings/${String(bookingId)}/edit`);
+      return `/bookings/${String(bookingId)}`;
     }
+    return `/bookings/${String(bookingId)}/edit`;
+  };
+
+  const handleRowClick = (e: React.MouseEvent, bookingId: number) => {
+    // Allow Ctrl+Click / Cmd+Click to open in new tab naturally via the anchor
+    if (e.ctrlKey || e.metaKey) return;
+    e.preventDefault();
+    navigate(getBookingUrl(bookingId));
   };
 
   const handleExportCsv = () => {
@@ -344,11 +350,12 @@ export default function SearchPage() {
                 {data.results.map((row) => (
                   <tr
                     key={row.id}
-                    onClick={() => { handleRowClick(row.id); }}
                     className="hover:bg-surface-variant/50 cursor-pointer transition-colors"
                   >
                     <td className="px-4 py-3 text-body-md text-on-surface font-medium font-mono">
-                      {row.job_number}
+                      <a href={getBookingUrl(row.id)} onClick={(e) => handleRowClick(e, row.id)} className="text-inherit no-underline">
+                        {row.job_number}
+                      </a>
                     </td>
                     <td className="px-4 py-3">
                       <StatusPill status={row.status} />
@@ -369,18 +376,15 @@ export default function SearchPage() {
                       {row.booking_date}
                     </td>
                     <td className="px-4 py-3">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRowClick(row.id);
-                        }}
-                        className="p-1.5 rounded-lg hover:bg-surface-variant text-on-surface-variant"
+                      <a
+                        href={getBookingUrl(row.id)}
+                        className="p-1.5 rounded-lg hover:bg-surface-variant text-on-surface-variant inline-flex"
                         aria-label="View booking"
                       >
                         <span className="material-symbols-outlined text-[18px]">
                           open_in_new
                         </span>
-                      </button>
+                      </a>
                     </td>
                   </tr>
                 ))}

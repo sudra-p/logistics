@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/auth/useAuth';
 import type { Role } from '@/auth/types';
 
@@ -120,13 +120,11 @@ export function Layout({ children }: LayoutProps) {
           {filteredNavItems.map((item) => {
             const active = isActive(item.path);
             return (
-              <button
+              <Link
                 key={item.path}
-                onClick={() => {
-                  navigate(item.path);
-                  setSidebarOpen(false);
-                }}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-body-lg transition-colors ${
+                to={item.path}
+                onClick={() => { setSidebarOpen(false); }}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-body-lg transition-colors no-underline ${
                   active
                     ? 'bg-secondary-container text-on-secondary-container font-semibold'
                     : 'text-on-surface-variant hover:bg-surface-variant'
@@ -136,7 +134,7 @@ export function Layout({ children }: LayoutProps) {
                   {item.icon}
                 </span>
                 {item.label}
-              </button>
+              </Link>
             );
           })}
         </nav>
@@ -144,16 +142,14 @@ export function Layout({ children }: LayoutProps) {
         {/* New Booking button */}
         {role && ['Admin', 'Operations'].includes(role) && (
           <div className="px-4 pb-4">
-            <button
-              onClick={() => {
-                navigate('/bookings/new');
-                setSidebarOpen(false);
-              }}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-on-primary rounded-xl font-medium text-body-md hover:bg-primary/90 transition-colors"
+            <Link
+              to="/bookings/new"
+              onClick={() => { setSidebarOpen(false); }}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-on-primary rounded-xl font-medium text-body-md hover:bg-primary/90 transition-colors no-underline"
             >
               <span className="material-symbols-outlined text-[18px]">add</span>
               New Booking
-            </button>
+            </Link>
           </div>
         )}
       </aside>

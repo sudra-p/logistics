@@ -71,7 +71,7 @@ export default function BLDetailPage() {
           <Button variant="outlined" onClick={() => navigate(`/bookings/${bookingId}`)}>
             Back to Booking
           </Button>
-          {bl.status === 'DRAFT' && (
+          {bl.status !== 'RELEASED' && (
             <Button
               variant="outlined"
               onClick={() => navigate(`/bookings/${bookingId}/bl/edit`)}
@@ -112,11 +112,11 @@ export default function BLDetailPage() {
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
             <Typography variant="body2" color="text.secondary">Shipper</Typography>
-            <Typography variant="body1">{bl.shipper_name || `ID: ${bl.shipper}`}</Typography>
+            <Typography variant="body1">{bl.shipper_name || (bl.shipper ? `ID: ${bl.shipper}` : '—')}</Typography>
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
             <Typography variant="body2" color="text.secondary">Consignee</Typography>
-            <Typography variant="body1">{bl.consignee_name || `ID: ${bl.consignee}`}</Typography>
+            <Typography variant="body1">{bl.consignee_name || (bl.consignee ? `ID: ${bl.consignee}` : '—')}</Typography>
           </Grid>
           <Grid size={{ xs: 12 }}>
             <Typography variant="body2" color="text.secondary">Notify Party</Typography>
