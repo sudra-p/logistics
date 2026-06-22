@@ -27,7 +27,9 @@ class BookingSearchView(ListAPIView):
     All filters combine with AND logic.
     """
 
-    queryset = Booking.objects.all()
+    queryset = Booking.objects.select_related(
+        'client', 'shipping_line', 'pol', 'pod'
+    ).all()
     serializer_class = BookingDetailSerializer
     filterset_class = BookingFilterSet
     pagination_class = StandardPagination
