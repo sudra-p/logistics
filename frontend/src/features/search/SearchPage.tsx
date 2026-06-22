@@ -8,8 +8,15 @@ import {
   MAX_PAGE_SIZE,
 } from './useBookingSearch';
 import type { SearchFilters } from './useBookingSearch';
+import { useDashboardKPIs } from '@/features/dashboard/dashboardHooks';
 
-const STATUS_OPTIONS = ['PENDING', 'DO_BOOKING_EDIT', 'COMPLETED'] as const;
+const STATUS_OPTIONS = [
+  { value: 'PENDING', label: 'Pending' },
+  { value: 'BOOKED', label: 'Booked' },
+  { value: 'STUFFING', label: 'Stuffing' },
+  { value: 'SHIPPED', label: 'Shipped' },
+  { value: 'COMPLETED', label: 'Completed' },
+] as const;
 
 function StatusPill({ status }: { status: string }) {
   const statusStyles: Record<string, string> = {
@@ -64,6 +71,7 @@ export default function SearchPage() {
   });
 
   const { data, isError, isLoading, refetch } = useBookingSearch(filters);
+  const { data: kpis } = useDashboardKPIs();
 
   const handleSearch = useCallback(() => {
     if (isValidSearchQuery(searchInput)) {
@@ -82,8 +90,8 @@ export default function SearchPage() {
   };
 
   const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selected = Array.from(e.target.selectedOptions, (opt) => opt.value);
-    setFilters((prev) => ({ ...prev, status: selected, page: 1 }));
+    const value = e.target.value;
+    setFilters((prev) => ({ ...prev, status: value ? [value] : [], page: 1 }));
   };
 
   const handleShippingLineChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -146,21 +154,17 @@ export default function SearchPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard
           label="Active Shipments"
-          value={data?.count ?? 0}
+          value={kpis?.active_shipments ?? 0}
           icon="inventory_2"
         />
         <StatCard
           label="In Transit"
-          value={
-            data?.results.filter((r) => r.status === 'DO_BOOKING_EDIT').length ?? 0
-          }
+          value={kpis?.containers_in_transit ?? 0}
           icon="local_shipping"
         />
         <StatCard
           label="Pending"
-          value={
-            data?.results.filter((r) => r.status === 'PENDING').length ?? 0
-          }
+          value={kpis?.pending_payments ?? 0}
           icon="pending_actions"
         />
       </div>
@@ -195,14 +199,14 @@ export default function SearchPage() {
               Status
             </label>
             <select
-              multiple
-              value={filters.status}
+              value={filters.status[0] ?? ''}
               onChange={handleStatusChange}
-              className="w-full px-3 py-2 rounded-xl border border-outline-variant bg-surface-variant/50 text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary h-[38px]"
+              className="w-full px-3 py-2 rounded-xl border border-outline-variant bg-surface-variant/50 text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
             >
-              {STATUS_OPTIONS.map((status) => (
-                <option key={status} value={status}>
-                  {status.replace(/_/g, ' ')}
+              <option value="">All Statuses</option>
+              {STATUS_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
                 </option>
               ))}
             </select>
