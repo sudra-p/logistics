@@ -15,9 +15,20 @@ import {
   FormControlLabel,
   Paper,
   Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useMutation } from '@tanstack/react-query';
 import { Controller } from 'react-hook-form';
 import { useBookingForm } from './useBookingForm';
+import apiClient from '@/api/client';
+import { ENDPOINTS } from '@/api/endpoints';
 import type { DropdownState } from './useBookingForm';
 import type { BookingFormValues } from './schema';
 
@@ -97,14 +108,23 @@ function MasterDataSelect({
 }
 
 export default function BookingFormPage() {
+  const navigate = useNavigate();
   const {
     form,
     isEditMode,
+    bookingId,
     bookingQuery,
     dropdowns,
     submitMutation,
     onSubmit,
   } = useBookingForm();
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  const deleteMutation = useMutation({
+    mutationFn: () => apiClient.delete(ENDPOINTS.BOOKING_DETAIL(bookingId!)),
+    onSuccess: () => { navigate('/search'); },
+  });
 
   const {
     register,
@@ -147,9 +167,21 @@ export default function BookingFormPage() {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h4" component="h1" sx={{ mb: 3 }}>
-        {isEditMode ? 'Edit Booking' : 'New Booking'}
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h4" component="h1">
+          {isEditMode ? 'Edit Booking' : 'New Booking'}
+        </Typography>
+        {isEditMode && (
+          <Button
+            variant="outlined"
+            color="error"
+            startIcon={<DeleteIcon />}
+            onClick={() => setDeleteDialogOpen(true)}
+          >
+            Delete
+          </Button>
+        )}
+      </Box>
 
       {submitMutation.isError && !submitMutation.error?.response?.data && (
         <Alert severity="error" sx={{ mb: 2 }}>
@@ -383,6 +415,32 @@ export default function BookingFormPage() {
           </Box>
         </Box>
       </Paper>
+
+      {/* Delete Booking Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+        <DialogTitle>Delete Booking</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete this booking? This action cannot be undone.
+          </DialogContentText>
+          {deleteMutation.isError && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              Failed to delete booking. It may have dependencies that prevent deletion.
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={() => deleteMutation.mutate()}
+            disabled={deleteMutation.isPending}
+          >
+            {deleteMutation.isPending ? <CircularProgress size={20} /> : 'Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
